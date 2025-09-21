@@ -1,0 +1,26 @@
+.scroll-container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+}
+
+.scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+
+.scroll-container:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.7);
+}
+
+.scroll-container:hover::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.5);
+}
