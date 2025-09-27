@@ -31,92 +31,92 @@ import { toast } from "sonner";
 import validationSchema from "@/validation/ownerRegister";
 
 // Add a verification modal component
-const VerificationModal = ({ 
-  isOpen, 
-  onClose, 
-  onVerify, 
-  email, 
-  isVerifying 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onVerify: (code: string) => void; 
-  email: string;
-  isVerifying: boolean;
-}) => {
-  const [verificationCode, setVerificationCode] = useState("");
+// const VerificationModal = ({ 
+//   isOpen, 
+//   onClose, 
+//   onVerify, 
+//   email, 
+//   isVerifying 
+// }: { 
+//   isOpen: boolean; 
+//   onClose: () => void; 
+//   onVerify: (code: string) => void; 
+//   email: string;
+//   isVerifying: boolean;
+// }) => {
+//   const [verificationCode, setVerificationCode] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent form submission
-    onVerify(verificationCode);
-  };
+//   const handleSubmit = (e: React.FormEvent) => {
+//     e.preventDefault(); // Prevent form submission
+//     onVerify(verificationCode);
+//   };
 
-  if (!isOpen) return null;
+//   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 border border-slate-700 rounded-lg max-w-md w-full p-6">
-        <div className="text-center mb-6">
-          <div className="mx-auto bg-orange-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-            <Mail className="h-8 w-8 text-orange-500" />
-          </div>
-          <h3 className="text-xl font-bold text-white mb-2">Verify Your Email</h3>
-          <p className="text-slate-400">
-            We've sent a verification code to <span className="text-orange-400">{email}</span>
-          </p>
-        </div>
+//   return (
+//     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+//       <div className="bg-slate-800 border border-slate-700 rounded-lg max-w-md w-full p-6">
+//         <div className="text-center mb-6">
+//           <div className="mx-auto bg-orange-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+//             <Mail className="h-8 w-8 text-orange-500" />
+//           </div>
+//           <h3 className="text-xl font-bold text-white mb-2">Verify Your Email</h3>
+//           <p className="text-slate-400">
+//             We've sent a verification code to <span className="text-orange-400">{email}</span>
+//           </p>
+//         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="verificationCode" className="text-slate-300">
-              Verification Code
-            </Label>
-            <Input
-              id="verificationCode"
-              type="text"
-              placeholder="Enter 6-digit code"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value)}
-              className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-orange-500 text-center text-lg tracking-widest"
-              maxLength={6}
-              required
-            />
-          </div>
+//         <form onSubmit={handleSubmit} className="space-y-4">
+//           <div className="space-y-2">
+//             <Label htmlFor="verificationCode" className="text-slate-300">
+//               Verification Code
+//             </Label>
+//             <Input
+//               id="verificationCode"
+//               type="text"
+//               placeholder="Enter 6-digit code"
+//               value={verificationCode}
+//               onChange={(e) => setVerificationCode(e.target.value)}
+//               className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-orange-500 text-center text-lg tracking-widest"
+//               maxLength={6}
+//               required
+//             />
+//           </div>
 
-          <div className="flex flex-col gap-3 pt-2">
-            <Button
-              type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-              disabled={isVerifying || verificationCode.length !== 6}
-            >
-              {isVerifying ? "Verifying..." : "Verify Account"}
-            </Button>
+//           <div className="flex flex-col gap-3 pt-2">
+//             <Button
+//               type="submit"
+//               className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+//               disabled={isVerifying || verificationCode.length !== 6}
+//             >
+//               {isVerifying ? "Verifying..." : "Verify Account"}
+//             </Button>
             
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-          </div>
+//             <Button
+//               type="button"
+//               variant="outline"
+//               className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
+//               onClick={onClose}
+//             >
+//               Cancel
+//             </Button>
+//           </div>
 
-          <div className="text-center text-sm text-slate-400 pt-2">
-            Didn't receive the code?{" "}
-            <button 
-              type="button" 
-              className="text-orange-400 hover:text-orange-300"
-              onClick={() => toast.info("Resend code functionality would go here")}
-            >
-              Resend
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
+//           <div className="text-center text-sm text-slate-400 pt-2">
+//             Didn't receive the code?{" "}
+//             <button 
+//               type="button" 
+//               className="text-orange-400 hover:text-orange-300"
+//               onClick={() => toast.info("Resend code functionality would go here")}
+//             >
+//               Resend
+//             </button>
+//           </div>
+//         </form>
+//       </div>
+//     </div>
+//   );
+// };
 
 export default function OwnerRegister() {
   const [formData, setFormData] = useState({
@@ -128,14 +128,12 @@ export default function OwnerRegister() {
     confirmPassword: "",
   });
   const dispatch = useDispatch<AppDispatch>()
-  const {isLoading, isGymNameAvailable} = useSelector((state:RootState)=>state.gymOwnerAuth)
+  const { isGymNameAvailable} = useSelector((state:RootState)=>state.gymOwnerAuth)
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const token=localStorage.getItem("token")
-  const isAuthorized=localStorage.getItem("isAuthenticated")
+  // const [isVerifying, setIsVerifying] = useState(false);
+
   const [status, setStatus] = useState<"checking" | "available" | "taken">("checking");
   const Navigate=useNavigate()
 
@@ -189,22 +187,21 @@ export default function OwnerRegister() {
     validateField(field, formData[field as keyof typeof formData]);
   };
 
-  const handleVerification = async (code: string) => {
-    setIsVerifying(true);
-    try {
-      // Here you would typically dispatch a verification thunk
-      // For now, we'll simulate a successful verification
-      await new Promise(resolve => setTimeout(resolve, 1500));
+  // const handleVerification = async (code: string) => {
+  //   setIsVerifying(true);
+  //   try {
+  //     // Here you would typically dispatch a verification thunk
+  //     // For now, we'll simulate a successful verification
+  //     await new Promise(resolve => setTimeout(resolve, 1500));
       
-      toast.success("Account verified successfully!");
-      setShowVerificationModal(false);
-      Navigate("/owner/dashboard");
-    } catch (error) {
-      toast.error("Invalid verification code. Please try again.");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
+  //     toast.success("Account verified successfully!");
+  //     Navigate("/owner/dashboard");
+  //   } catch (error) {
+  //     toast.error("Invalid verification code. Please try again.");
+  //   } finally {
+  //     setIsVerifying(false);
+  //   }
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent default form submission
@@ -234,11 +231,8 @@ export default function OwnerRegister() {
       
       // Simulate API call
       await dispatch(registerGymOwnerFeth(ownerData)).unwrap()
-      
       // Show verification modal instead of redirecting immediately
-      setShowVerificationModal(true);
       toast.success("Account created! Please verify your email.");
-      
     } catch (error) {
       if (error instanceof yup.ValidationError) {
         const newErrors: Record<string, string> = {};
@@ -249,7 +243,7 @@ export default function OwnerRegister() {
         });
         setErrors(newErrors);
       } else {
-        toast.error("Registration failed. Please try again.");
+        // toast.error("Registration failed. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -571,13 +565,13 @@ export default function OwnerRegister() {
       </div>
 
       {/* Verification Modal */}
-      <VerificationModal
+      {/* <VerificationModal
         isOpen={showVerificationModal}
         onClose={() => setShowVerificationModal(false)}
         onVerify={handleVerification}
         email={formData.emailId}
         isVerifying={isVerifying}
-      />
+      /> */}
     </div>
   );
 }

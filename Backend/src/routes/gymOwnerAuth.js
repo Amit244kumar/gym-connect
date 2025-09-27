@@ -9,7 +9,8 @@ import {
   isGymNameUnique,
   forgotPassword,
   resetPassword,
-  verifyResetToken
+  verifyResetToken,
+  verifyEmail
 } from '../controller/gymOwnerAuth.js';
 
 import {
@@ -38,8 +39,6 @@ router.get('/check-gym-name/:gymName', isGymNameUnique);
 // Login gym owner
 router.post('/login', validateGymOwnerLogin, loginGymOwner);
 
-// Protected Routes (Authentication Required)
-// ========================================
 
 // GET /api/gym-owner/profile
 // Get gym owner profile
@@ -76,13 +75,9 @@ router.post('/refresh-token', authMiddleware, refreshToken);
 // Reset password with token
 router.put('/reset-password/:token', validateResetPassword, resetPassword);
 
-
-// Additional Routes for Future Features
-// ====================================
-
 // POST /api/gym-owner/verify-email
 // Verify email address
-// router.post('/verify-email', validateEmailVerification, verifyEmail);
+router.post('/verify-email',authMiddleware,verifyEmail);
 
 // POST /api/gym-owner/verify-phone
 // Verify phone number

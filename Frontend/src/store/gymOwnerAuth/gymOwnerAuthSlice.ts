@@ -7,7 +7,8 @@ import {
   logoutGymOwnerFeth,
   forgetPasswordFeth,
   verifyResetPasswordTokenFeth,
-  resetPasswordFeth
+  resetPasswordFeth,
+  verifyEmailFeth
 } from "./gymOwnerAuthThunks"
 import {GymOwner,GymOwnerAuthState,CredentialsPayload} from "../../type/gymOwnerTypes"
 import { stat } from 'fs';
@@ -166,7 +167,15 @@ const gymOwnerAuthSlice = createSlice({
       .addCase(resetPasswordFeth.rejected, (state) => {  
         state.isLoading = false;
       })
-
+      .addCase(verifyEmailFeth.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(verifyEmailFeth.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(verifyEmailFeth.rejected, (state) => {  
+        state.isLoading = false;
+      })
     // // Update Profile
     //   .addCase('gymOwnerAuth/updateProfile/pending', (state) => {
     //     state.isLoading = true;

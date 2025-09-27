@@ -20,7 +20,7 @@ function App() {
   return (
     <Provider store={store}>
       {/* <AuthProvider> */}
-      <Toaster richColors position="top-center" duration={3000} />
+      <Toaster richColors position="top-center" duration={4000}  visibleToasts={3} />
       <AppRouters />
       {/* </AuthProvider> */}
     </Provider>

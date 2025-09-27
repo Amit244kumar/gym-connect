@@ -16,7 +16,7 @@ export const generateToken = (owner) => {
 
 // Generate email verification token
 export const generateEmailVerificationToken = () => {
-  return crypto.randomBytes(32).toString('hex');
+  return crypto.randomBytes(4).toString('base64').replace(/[+/=]/g, '').substring(0, 6);
 };
 
 // Generate phone verification OTP

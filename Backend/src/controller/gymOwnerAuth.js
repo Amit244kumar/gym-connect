@@ -1,7 +1,7 @@
 import GymOwner from '../models/gymOwner.js';
 import { validationResult } from 'express-validator';
 import { generateToken, generateEmailVerificationToken, generatePhoneVerificationOTP } from '../utils/helper.js';
-import { sendPasswordResetEmail } from '../helper/emailHelper.js';
+import { sendEmailVerification, sendPasswordResetEmail } from '../helper/emailHelper.js';
 import crypto from "crypto";
 import Sequelize from 'sequelize'; // Import Sequelize
 const Op = Sequelize.Op; // Then get Op from it
@@ -64,7 +64,7 @@ export const registerGymOwner = async (req, res) => {
     const phoneVerificationCode = generatePhoneVerificationOTP();
     
     // Set expiry times (24 hours for email, 10 minutes for OTP)
-    const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const emailVerificationExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
     const phoneVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     console.log("Email Verification Token",emailVerificationToken)
     // Create gym owner
@@ -98,7 +98,7 @@ export const registerGymOwner = async (req, res) => {
 
     // Generate JWT token
     const token = generateToken(gymOwner);
-    
+    await sendEmailVerification(email, emailVerificationToken, ownerName);
     // Remove password from response
     const ownerData = gymOwner.toJSON();
     delete ownerData.password;
@@ -551,6 +551,55 @@ export const logout = async (req, res) => {
   }
 };
 
+export const verifyEmail = async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+    const {code}=req.body
+    console.log("Code",code,ownerId)
+    const owner = await GymOwner.findByPk(ownerId);
+    if (!owner) {
+      return res.json({
+        success: false,
+        message: 'Gym owner not found'
+      });
+    }
+
+    if (owner.isEmailVerified) {
+      return res.json({
+        success: true,
+        message: 'Email is already verified'
+      });
+    }
+    if(owner.emailVerificationExpires < new Date()){
+      return res.status(400).json({
+        success: false,
+        message: 'Verification code has expired. Please request a new one.'
+      });
+    }
+    if (owner.emailVerificationToken !== code) {  
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid verification code'
+      });
+    }
+    // Verify email
+    owner.isEmailVerified = true;
+    owner.emailVerificationToken = null;
+    owner.emailVerificationExpires = null;
+    await owner.save();
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully'
+    });
+  }catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Email verification failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
 // Refresh Token (optional)
 export const refreshToken = async (req, res) => {
   try {

@@ -17,9 +17,11 @@ import {
 import { useEffect, useState, useRef } from "react";
 import AddMemberModal from "@/components/modals/AddMemberModal";
 import { useSelector, useDispatch } from "react-redux";
-import { getProfilefeth, logoutGymOwnerFeth } from "@/store/gymOwnerAuth/gymOwnerAuthThunks";
+import { getProfilefeth, logoutGymOwnerFeth, verifyEmailFeth } from "@/store/gymOwnerAuth/gymOwnerAuthThunks";
 import { AppDispatch, RootState } from '../store/index'
 import { useNavigate } from "react-router-dom";
+import EmailVerificationModal from "@/components/modals/emailVerificationModal";
+import { toast } from "sonner";
 export default function OwnerDashboard() {
   const dispatch = useDispatch<AppDispatch>()
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
@@ -27,6 +29,10 @@ export default function OwnerDashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { owner, token, isAuthenticated } = useSelector((state: RootState) => state.gymOwnerAuth)
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const {loading}=useSelector((state:RootState)=>state.gymOwnerAuth)
+
   const navigate=useNavigate();
   console.log("Owner data in dashboard:", isAuthenticated, token);
   const handleCloseModal = () => {
@@ -50,6 +56,7 @@ export default function OwnerDashboard() {
       if (token) {
         const response = await dispatch(getProfilefeth()).unwrap();
         console.log("Profile response:", response)
+        setShowVerificationModal(!response.isEmailVerified);
       }else(
         navigate('/login')
       )
@@ -74,6 +81,16 @@ export default function OwnerDashboard() {
     navigate('/');
     setIsProfileDropdownOpen(false)
   }
+  const handleVerification = async (code: string) => {
+    try {
+      const res=await dispatch(verifyEmailFeth(code)).unwrap();
+      toast.success("Email verified successfully!");
+      setShowVerificationModal(false);
+    } catch (error) {
+      toast.error("Invalid verification code. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
       {isAddMemberModalOpen && <AddMemberModal onClose={handleCloseModal} />}
@@ -317,6 +334,13 @@ export default function OwnerDashboard() {
           </div>
         </div>
       </div>
+      <EmailVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        onVerify={handleVerification}
+        email={owner?.email}
+        isVerifying={loading}
+      />
     </div>
   );
 }

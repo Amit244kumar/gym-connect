@@ -174,6 +174,26 @@ export const resetPasswordFeth = createAsyncThunk<{ success: boolean; message: s
   }
 );
 
+export const verifyEmailFeth = createAsyncThunk<{ success: boolean; message: string },any,ThunkApiConfig>(
+  'verifyEmailFeth/verifyEmail',
+  async (payload, {  rejectWithValue }) => {
+    try {
+      const response = await api.gymOnwerAuth.verifyEmail(payload);
+      console.log("Verify email response:",response)
+      if (response.success) {
+         toast.success(response.message)
+         return response;
+      } else {
+        toast.error(response.response?.data?.message)
+        return rejectWithValue(response.data.message || 'fail to verify email');
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to verify email';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 // // Update Profile
 // export const updateGymOwnerProfile = createAsyncThunk<
 //   { success: boolean; message: string; owner: GymOwner },
@@ -208,34 +228,6 @@ export const resetPasswordFeth = createAsyncThunk<{ success: boolean; message: s
 //   }
 // );
 
-// // Change Password
-// export const changePassword = createAsyncThunk<
-//   { success: boolean; message: string },
-//   PasswordChangeData,
-//   ThunkApiConfig
-// >(
-//   'gymOwnerAuth/changePassword',
-//   async (passwordData, { dispatch, rejectWithValue }) => {
-//     try {
-//       dispatch(setLoading(true));
-//       dispatch(clearError());
-      
-//       const response = await api.put<ApiResponse>('/gym-owner/change-password', passwordData);
-      
-//       if (response.data.success) {
-//         return { success: true, message: response.data.message };
-//       } else {
-//         return rejectWithValue(response.data.message || 'Failed to change password');
-//       }
-//     } catch (error: any) {
-//       const errorMessage = error.response?.data?.message || error.message || 'Failed to change password';
-//       dispatch(setError(errorMessage));
-//       return rejectWithValue(errorMessage);
-//     } finally {
-//       dispatch(setLoading(false));
-//     }
-//   }
-// );
 
 
 // // Refresh Token
