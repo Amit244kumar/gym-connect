@@ -68,6 +68,11 @@ GymOwner.init(
       allowNull: false,
       unique: true,
     },
+    ownerPhoto: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'owner_photo',
+    },
 
     // Registration + QR sharing
     registrationUrl: {

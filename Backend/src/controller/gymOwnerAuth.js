@@ -1,4 +1,4 @@
-import GymOwner from '../models/gymOwner.js';
+import  GymOwner  from '../models/gymOwner.js';
 import { validationResult } from 'express-validator';
 import { generateToken, generateEmailVerificationToken, generatePhoneVerificationOTP } from '../utils/helper.js';
 import { sendEmailVerification, sendPasswordResetEmail } from '../helper/emailHelper.js';
@@ -9,116 +9,101 @@ const Op = Sequelize.Op; // Then get Op from it
 // Gym Owner Registration
 export const registerGymOwner = async (req, res) => {
   try {
-    // Validate input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
-      });
-    }
-
-    const { 
-      ownerName, 
-      email, 
-      phone, 
-      password, 
-      gymName,
-      // ownerPhoto 
-    } = req.body;
-    console.log("DSfd",ownerName, 
-      email, 
-      phone, 
-      password, 
-      gymName)
-    // Check if email already exists
-    console.log("Email",email)
-    const existingEmail = await GymOwner.findOne({ where: { email } });
-    if (existingEmail) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email already registered'
-      });
-    }
-
-    // Check if phone already exists
-    // const existingPhone = await GymOwner.findOne({ where: { phone } });
-    // if (existingPhone) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'Phone number already registered'
-    //   });
-    // }
-
-    // Check if gym name already exists
-    const existingGym = await GymOwner.findOne({ where: { gymName } });
-    if (existingGym) {
-      return res.status(400).json({
-        success: false,
-        message: 'Gym name already taken'
-      });
-    }
-    console.log("Gym Owner",existingGym)
-    // Generate verification codes and expiry times
-    const emailVerificationToken = generateEmailVerificationToken();
-    const phoneVerificationCode = generatePhoneVerificationOTP();
-    
-    // Set expiry times (24 hours for email, 10 minutes for OTP)
-    const emailVerificationExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-    const phoneVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    console.log("Email Verification Token",emailVerificationToken)
-    // Create gym owner
-    const gymOwner = await GymOwner.create({
-      ownerName,
-      email: email.toLowerCase(),
-      phone,
-      password,
-      gymName,
-      // ownerPhoto,
-      subscriptionPlanType: 'trial',
-      subscriptionStatus: 'active',
-      // Set trial period (2 months from now)
-      trialStart: new Date(),
-      trialEnd: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
-      isEmailVerified: false,
-      isPhoneVerified: false,
-      // Verification codes and expiry times
-      emailVerificationToken,
-      emailVerificationExpires,
-      phoneVerificationCode,
-      phoneVerificationExpires,
-    });
-    console.log("Gym Owner",gymOwner)
-    // Generate registration URL and QR code
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const registrationUrl = gymOwner.generateRegistrationUrl(baseUrl);
-
-    gymOwner.registrationUrl=registrationUrl
-    await gymOwner.save()
-
-    // Generate JWT token
-    const token = generateToken(gymOwner);
-    await sendEmailVerification(email, emailVerificationToken, ownerName);
-    // Remove password from response
-    const ownerData = gymOwner.toJSON();
-    delete ownerData.password;
-    res.status(201).json({
-      success: true,
-      message: 'Gym owner registered successfully. Please verify your email and phone number.',
-      data: {
-        owner: ownerData,
-        token,
-        registrationUrl,
-        trialEnd: gymOwner.trialEnd,
-        verification: {
-          emailVerificationToken,
-          emailVerificationExpires,
-          phoneVerificationCode,
-          phoneVerificationExpires
-        }
+      // Validate input
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+          success: false, 
+          errors: errors.array() 
+        });
       }
-    });
 
+      const { 
+        ownerName, 
+        email, 
+        phone, 
+        password, 
+        gymName
+      } = req.body;
+
+      // Check if email already exists
+      const existingEmail = await GymOwner.findOne({ where: { email } });
+      if (existingEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already registered'
+        });
+      }
+
+      // Check if gym name already exists
+      const existingGym = await GymOwner.findOne({ where: { gymName } });
+      if (existingGym) {
+        return res.status(400).json({
+          success: false,
+          message: 'Gym name already taken'
+        });
+      }
+
+      // Generate verification codes and expiry times
+      const emailVerificationToken = generateEmailVerificationToken();
+      const phoneVerificationCode = generatePhoneVerificationOTP();
+      
+      // Set expiry times (5 minutes for email, 10 minutes for OTP)
+      const emailVerificationExpires = new Date(Date.now() + 5 * 60 * 1000);
+      const phoneVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
+      console.log("Fileffff",req.file)
+      // Create gym owner
+      const gymOwner = await GymOwner.create({
+        ownerName,
+        email: email.toLowerCase(),
+        phone,
+        password,
+        gymName,
+        ownerPhoto: req.file ? req.file.filename : null, // Save file path if uploaded
+        subscriptionPlanType: 'trial',
+        subscriptionStatus: 'active',
+        trialStart: new Date(),
+        trialEnd: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
+        isEmailVerified: false,
+        isPhoneVerified: false,
+        emailVerificationToken,
+        emailVerificationExpires,
+        phoneVerificationCode,
+        phoneVerificationExpires,
+      });
+
+      // Generate registration URL
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const registrationUrl = gymOwner.generateRegistrationUrl(baseUrl);
+      gymOwner.registrationUrl = registrationUrl;
+      await gymOwner.save();
+
+      // Generate JWT token
+      const token = generateToken(gymOwner);
+      
+      // Send email verification
+      await sendEmailVerification(email, emailVerificationToken, ownerName);
+
+      // Remove password from response
+      const ownerData = gymOwner.toJSON();
+      delete ownerData.password;
+
+      res.status(201).json({
+        success: true,
+        message: 'Gym owner registered successfully. Please verify your email and phone number.',
+        data: {
+          owner: ownerData,
+          token,
+          registrationUrl,
+          trialEnd: gymOwner.trialEnd,
+          verification: {
+            emailVerificationToken,
+            emailVerificationExpires,
+            phoneVerificationCode,
+            phoneVerificationExpires
+          }
+        }
+      });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({
@@ -262,10 +247,30 @@ export const getProfile = async (req, res) => {
       });
     }
 
+    // Calculate trial days information
+    const trialStart = new Date(owner.trialStart);
+    const trialEnd = new Date(owner.trialEnd);
+    const today = new Date();
+
+    const diffTime = trialEnd - trialStart;
+    const totalTrialDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const timeUntilTrialEnd = trialEnd - today;
+    const daysLeft = Math.ceil(timeUntilTrialEnd / (1000 * 60 * 60 * 24));
+
     res.json({
       success: true,
       message: 'Profile fetched successfully',
-      data:owner 
+      data: {
+        profileImage: owner.ownerPhoto,
+        ...owner.dataValues,
+        trialInfo: {
+          totalTrialDays,
+          daysLeft: Math.max(0, daysLeft),
+          trialStatus: today <= trialEnd ? 'active' : 'expired',
+          isTrialActive: today <= trialEnd
+        }
+      }
     });
 
   } catch (error) {
@@ -361,7 +366,7 @@ export const forgotPassword = async (req, res) => {
       resetToken, 
       user.name
     );
-    
+    console.log("Email jjnjj",emailResult.success)
     if (!emailResult.success) {
       return res.status(500).json({ 
         success: false, 
@@ -370,6 +375,7 @@ export const forgotPassword = async (req, res) => {
     }
     
     // Return success response
+    console.log("Email sent successfully")  
     return res.status(200).json({ 
       success: true, 
       message: 'Password reset email sent successfully' 
@@ -551,11 +557,52 @@ export const logout = async (req, res) => {
   }
 };
 
+export const resendEmailVerification = async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+    const owner = await GymOwner.findByPk(ownerId);
+    if (!owner) {
+      return res.status(404).json({
+        success: false,
+        message: 'Gym owner not found'
+      });
+    }
+    if (owner.isEmailVerified) {
+      return res.json({
+        success: true,
+        message: 'Email is already verified'
+      });
+    } 
+    // Generate new verification token and expiry
+    const emailVerificationToken = generateEmailVerificationToken();
+    console.log("Tokensdfdffd",emailVerificationToken)
+    const emailVerificationExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    owner.emailVerificationToken = emailVerificationToken;
+    owner.emailVerificationExpires = emailVerificationExpires;
+    await owner.save(); 
+    // Send verification email
+    await sendEmailVerification(owner.email, emailVerificationToken, owner.ownerName);
+    res.json({
+      success: true,
+      message: 'Verification email resent successfully'
+    });
+  }
+  catch (error) {
+    console.error('Resend email verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resend verification email',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+// Verify Email
+
 export const verifyEmail = async (req, res) => {
   try {
     const ownerId = req.user.id;
     const {code}=req.body
-    console.log("Code",code,ownerId)
+    console.log("Codesdsd",code,ownerId)
     const owner = await GymOwner.findByPk(ownerId);
     if (!owner) {
       return res.json({

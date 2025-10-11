@@ -174,6 +174,26 @@ export const resetPasswordFeth = createAsyncThunk<{ success: boolean; message: s
   }
 );
 
+export const resendEmailVerificationFeth = createAsyncThunk<{ success: boolean; message: string },void,ThunkApiConfig>(
+  'resendEmailVerificationFeth/resendEmailVerification',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.gymOnwerAuth.resendEmailVerification();
+      console.log("Resend email verification response:",response)
+      if (response.success) {
+         toast.success(response.message)
+         return response;
+      } else {
+        toast.error(response.response?.data?.message)
+        return rejectWithValue(response.data.message || 'fail to resend email');
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to resend email';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 export const verifyEmailFeth = createAsyncThunk<{ success: boolean; message: string },any,ThunkApiConfig>(
   'verifyEmailFeth/verifyEmail',
   async (payload, {  rejectWithValue }) => {

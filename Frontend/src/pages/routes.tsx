@@ -1,14 +1,24 @@
   // routes.js
   import Index from './Index';
   import Login from './Login';
-  import OwnerRegister from './OwnerRegister';
-  import OwnerDashboard from './OwnerDashboard';
-  import MemberRegister from './MemberRegister';
-  import MemberDashboard from './MemberDashboard';
+  import OwnerRegister from './owner/OwnerRegister';
+  import OwnerDashboard from './owner/OwnerDashboard';
+  import MemberRegister from './member/MemberRegister';
+  import MemberDashboard from './member/MemberDashboard';
   import NotFound from './NotFound';
   import ProtectedRoute from '../components/ProtectedRoute';
   import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom';
 import ResetPassword from './ResetPassword';
+import MainLayout from '@/components/layout/MainLayout';
+import Profile from './owner/Profile';
+import Members from './owner/Members';
+import CheckIn from './owner/CheckIn';
+import MembershipPlan from './owner/MembershipPlan';
+import Reports from './owner/Reports';
+import Notifications from './owner/Notifications';
+import Messages from './owner/Messages';
+import Settings from './owner/Settings';
+import Help from './owner/Help';
   export const AppRouters=()=>{
       const router=createBrowserRouter(
         createRoutesFromElements(
@@ -29,8 +39,17 @@ import ResetPassword from './ResetPassword';
                 </Route>
                 {/* Protected Routes */}
                 
-                <Route path="/owner/dashboard/:gymName" element={<OwnerDashboard />}>
-                
+                <Route element={<MainLayout />} >
+                  <Route path="/owner/dashboard/:gymName" element={<OwnerDashboard />} />
+                  <Route path="/owner/profile/:gymName" element={<Profile />} />
+                  <Route path="/owner/members" element={<Members />} />
+                  <Route path="/owner/members/checkin" element={<CheckIn />} />
+                  <Route path="/owner/membersipPlan" element={<MembershipPlan />} />
+                  <Route path="/owner/reports" element={<Reports />} />
+                  <Route path="/owner/notifications" element={<Notifications />} />
+                  <Route path="/owner/messages" element={<Messages />} />
+                  <Route path="/owner/settings" element={<Settings />} />
+                  <Route path="/owner/help" element={<Help />} />
                 </Route>
                 <Route path="/member/dashboard"  element={<MemberDashboard />}>
                           

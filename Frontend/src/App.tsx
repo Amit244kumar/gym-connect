@@ -11,9 +11,9 @@ import { Toaster } from 'sonner';
 import Index from './pages/Index';
 import Login from './pages/Login';
 import OwnerRegister from './pages/OwnerRegister';
-import OwnerDashboard from './pages/OwnerDashboard';
-import MemberRegister from './pages/MemberRegister';
-import MemberDashboard from './pages/MemberDashboard';
+import OwnerDashboard from './pages/owner/OwnerDashboard';
+import MemberRegister from './pages/member/MemberRegister';
+import MemberDashboard from './pages/member/MemberDashboard';
 import NotFound from './pages/NotFound';
 import {AppRouters} from "./pages/routes";
 function App() {

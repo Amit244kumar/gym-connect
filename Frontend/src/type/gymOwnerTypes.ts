@@ -1,5 +1,11 @@
 
 // Types
+interface trialInfo {
+    totalTrialDays: number;
+    daysLeft: number;
+    trialStatus: 'active' | 'expired';
+    isTrialActive: boolean;
+}
 export interface GymOwner {
     id: number;
     ownerName: string;
@@ -7,17 +13,21 @@ export interface GymOwner {
     phone: string;
     gymName: string;
     slug: string;
-    subscriptionPlanType: 'trial' | 'Premium Monthly' | 'Premium Quarterly';
+    subscriptionPlanType: 'trial' | 'basic' | 'premium';
     subscriptionStatus: 'active' | 'expired';
     trialStart: string;
     trialEnd: string;
     isEmailVerified: boolean;
     isPhoneVerified: boolean;
+    phoneVerificationCode?: string;
+    emailVerificationCode?: string;
+    profileImage?: string;
+    trialInfo:trialInfo; 
 }
 
 export interface GymOwnerAuthState {
     token: string | null;
-    owner: GymOwner | object;
+    owner: GymOwner;
     isAuthenticated: boolean;
     isLoading: boolean;
     slug: string;
@@ -35,6 +45,7 @@ export interface RegisterUserData {
     phone: string;
     email: string;
     password: string;
+    profileImage?: File | null;
 }
 
 export interface LoginCredentials {

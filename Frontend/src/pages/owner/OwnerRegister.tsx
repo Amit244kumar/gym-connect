@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,103 +20,20 @@ import {
   Mail,
   Lock,
   CheckCircle,
+  Upload,
+  X,
+  Camera,
+  Loader2,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from '../store/index'
+import { AppDispatch, RootState } from '../../store/index';
 import { Badge } from "@/components/ui/badge";
 import * as yup from "yup";
-import {isGymNameAvailableFeth, registerGymOwnerFeth} from "../store/gymOwnerAuth/gymOwnerAuthThunks"
+import { isGymNameAvailableFeth, registerGymOwnerFeth } from "../../store/gymOwnerAuth/gymOwnerAuthThunks";
 import { RegisterUserData } from "@/type/gymOwnerTypes";
 import { toast } from "sonner";
 import validationSchema from "@/validation/ownerRegister";
-
-// Add a verification modal component
-// const VerificationModal = ({ 
-//   isOpen, 
-//   onClose, 
-//   onVerify, 
-//   email, 
-//   isVerifying 
-// }: { 
-//   isOpen: boolean; 
-//   onClose: () => void; 
-//   onVerify: (code: string) => void; 
-//   email: string;
-//   isVerifying: boolean;
-// }) => {
-//   const [verificationCode, setVerificationCode] = useState("");
-
-//   const handleSubmit = (e: React.FormEvent) => {
-//     e.preventDefault(); // Prevent form submission
-//     onVerify(verificationCode);
-//   };
-
-//   if (!isOpen) return null;
-
-//   return (
-//     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-//       <div className="bg-slate-800 border border-slate-700 rounded-lg max-w-md w-full p-6">
-//         <div className="text-center mb-6">
-//           <div className="mx-auto bg-orange-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-//             <Mail className="h-8 w-8 text-orange-500" />
-//           </div>
-//           <h3 className="text-xl font-bold text-white mb-2">Verify Your Email</h3>
-//           <p className="text-slate-400">
-//             We've sent a verification code to <span className="text-orange-400">{email}</span>
-//           </p>
-//         </div>
-
-//         <form onSubmit={handleSubmit} className="space-y-4">
-//           <div className="space-y-2">
-//             <Label htmlFor="verificationCode" className="text-slate-300">
-//               Verification Code
-//             </Label>
-//             <Input
-//               id="verificationCode"
-//               type="text"
-//               placeholder="Enter 6-digit code"
-//               value={verificationCode}
-//               onChange={(e) => setVerificationCode(e.target.value)}
-//               className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-orange-500 text-center text-lg tracking-widest"
-//               maxLength={6}
-//               required
-//             />
-//           </div>
-
-//           <div className="flex flex-col gap-3 pt-2">
-//             <Button
-//               type="submit"
-//               className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-//               disabled={isVerifying || verificationCode.length !== 6}
-//             >
-//               {isVerifying ? "Verifying..." : "Verify Account"}
-//             </Button>
-            
-//             <Button
-//               type="button"
-//               variant="outline"
-//               className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
-//               onClick={onClose}
-//             >
-//               Cancel
-//             </Button>
-//           </div>
-
-//           <div className="text-center text-sm text-slate-400 pt-2">
-//             Didn't receive the code?{" "}
-//             <button 
-//               type="button" 
-//               className="text-orange-400 hover:text-orange-300"
-//               onClick={() => toast.info("Resend code functionality would go here")}
-//             >
-//               Resend
-//             </button>
-//           </div>
-//         </form>
-//       </div>
-//     </div>
-//   );
-// };
+import { cn } from "@/lib/utils";
 
 export default function OwnerRegister() {
   const [formData, setFormData] = useState({
@@ -126,16 +43,20 @@ export default function OwnerRegister() {
     emailId: "",
     password: "",
     confirmPassword: "",
+    profileImage: null as File | null,
   });
-  const dispatch = useDispatch<AppDispatch>()
-  const { isGymNameAvailable} = useSelector((state:RootState)=>state.gymOwnerAuth)
+  const dispatch = useDispatch<AppDispatch>();
+  const { isGymNameAvailable, isLoading } = useSelector((state: RootState) => state.gymOwnerAuth);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [isVerifying, setIsVerifying] = useState(false);
-
   const [status, setStatus] = useState<"checking" | "available" | "taken">("checking");
-  const Navigate=useNavigate()
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -147,12 +68,12 @@ export default function OwnerRegister() {
       } else {
         setStatus(null);
       }
-    } 
+    }
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
-  
+
   useEffect(() => {
     if (!formData.gymName.trim()) return;
 
@@ -170,8 +91,8 @@ export default function OwnerRegister() {
       }
     }, 2000); // 2-second delay
     return () => clearTimeout(delayDebounce);
-  }, [formData.gymName, dispatch, isGymNameAvailable]); 
-  
+  }, [formData.gymName, dispatch, isGymNameAvailable]);
+
   const validateField = async (field: string, value: string) => {
     try {
       await validationSchema.validateAt(field, { ...formData, [field]: value });
@@ -187,53 +108,144 @@ export default function OwnerRegister() {
     validateField(field, formData[field as keyof typeof formData]);
   };
 
-  // const handleVerification = async (code: string) => {
-  //   setIsVerifying(true);
-  //   try {
-  //     // Here you would typically dispatch a verification thunk
-  //     // For now, we'll simulate a successful verification
-  //     await new Promise(resolve => setTimeout(resolve, 1500));
-      
-  //     toast.success("Account verified successfully!");
-  //     Navigate("/owner/dashboard");
-  //   } catch (error) {
-  //     toast.error("Invalid verification code. Please try again.");
-  //   } finally {
-  //     setIsVerifying(false);
-  //   }
-  // };
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      // Validate file type and size
+      if (!file.type.match('image.*')) {
+        toast.error("Please select an image file");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+
+      setFormData(prev => ({ ...prev, profileImage: file }));
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+
+      // Validate file type and size
+      if (!file.type.match('image.*')) {
+        toast.error("Please select an image file");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+
+      setFormData(prev => ({ ...prev, profileImage: file }));
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, profileImage: null }));
+    setPreviewImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setUploadProgress(0);
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent default form submission
-    
-    if(!isGymNameAvailable){
-        toast.info('Gym name should be unique')
-        return
+    if (!isGymNameAvailable) {
+      toast.info('Gym name should be unique');
+      return;
     }
-    
+
+    // Validate profile image
+    if (!formData.profileImage) {
+      alert("D")
+      setErrors(prev => ({ ...prev, profileImage: "Profile image is required" }));
+      return;
+    }
+    console.log("FormsData", formData);
     try {
       await validationSchema.validate(formData, { abortEarly: false });
-      
+
       if (!agreedToTerms) {
         toast.error("Please agree to the terms and conditions");
         return;
       }
 
       setIsSubmitting(true);
+      setIsUploading(true);
+
+      // Create FormData object to send all data including the file
+      const submitData = new FormData();
+      submitData.append('ownerName', formData.ownerName);
+      submitData.append('gymName', formData.gymName);
+      submitData.append('phone', formData.phoneNumber);
+      submitData.append('email', formData.emailId);
+      submitData.append('password', formData.password);
       
-      const ownerData:RegisterUserData={
-        ownerName: formData.ownerName,
-        gymName: formData.gymName,
-        phone: formData.phoneNumber,
-        email: formData.emailId,
-        password: formData.password,
+      // Append the profile image file
+      if (formData.profileImage) {
+        submitData.append('profileImage', formData.profileImage);
       }
+      console.log("wsqasrd",submitData);
+      const response = await dispatch(registerGymOwnerFeth(submitData)).unwrap();
       
-      // Simulate API call
-      await dispatch(registerGymOwnerFeth(ownerData)).unwrap()
-      // Show verification modal instead of redirecting immediately
+      // Reset upload progress
+      setUploadProgress(0);
+      setIsUploading(false);
+      setIsSubmitting(false);
+      
+      if(response && response.success){
+        // Show success message
       toast.success("Account created! Please verify your email.");
+      
+      // Navigate to login or dashboard
+        navigate('/login');
+      }
     } catch (error) {
+      // Reset upload progress
+      setUploadProgress(0);
+      setIsUploading(false);
+      setIsSubmitting(false);
+
       if (error instanceof yup.ValidationError) {
         const newErrors: Record<string, string> = {};
         error.inner.forEach((err) => {
@@ -243,18 +255,13 @@ export default function OwnerRegister() {
         });
         setErrors(newErrors);
       } else {
-        // toast.error("Registration failed. Please try again.");
+        toast.error("Registration failed. Please try again.");
       }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   // Handle form submission with a separate function to ensure preventDefault works
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSubmit(e);
-  };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8 px-4">
@@ -305,7 +312,89 @@ export default function OwnerRegister() {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={handleFormSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Profile Image Upload */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Camera className="h-5 w-5 text-orange-500" />
+                  Profile Photo
+                </h3>
+
+                <div className="flex justify-center">
+                  <div 
+                    className={cn(
+                      "relative w-32 h-32 rounded-full overflow-hidden border-4 border-dashed cursor-pointer transition-all",
+                      isDragging ? "border-orange-500 bg-slate-700/50" : "border-slate-600 bg-slate-700/30",
+                      errors.profileImage ? "border-red-500" : ""
+                    )}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={handleUploadClick}
+                  >
+                    {previewImage ? (
+                      <img 
+                        src={previewImage} 
+                        alt="Profile preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center w-full h-full text-slate-400">
+                        <Camera className="h-10 w-10 mb-2" />
+                        <span className="text-xs text-center">Upload Photo</span>
+                      </div>
+                    )}
+                    
+                    {/* Remove button */}
+                    {previewImage && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage();
+                        }}
+                        className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Upload Progress */}
+                {isUploading && (
+                  <div className="w-full max-w-xs mx-auto">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-slate-300">Uploading...</span>
+                      <span className="text-sm text-slate-300">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-700 rounded-full h-2">
+                      <div 
+                        className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept="image/*"
+                  required
+                />
+
+                <div className="text-center text-sm text-slate-400">
+                  <p>Click or drag to upload a profile photo</p>
+                  <p>JPG, PNG or GIF (max. 5MB)</p>
+                  {errors.profileImage && (
+                    <p className="text-red-400 text-sm mt-1">{errors.profileImage}</p>
+                  )}
+                </div>
+              </div>
+
               {/* Owner Details */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -535,15 +624,12 @@ export default function OwnerRegister() {
               <Button
                 type="submit"
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white py-6 text-lg"
-                disabled={!agreedToTerms || isSubmitting}
+                disabled={!agreedToTerms || isSubmitting || isUploading}
               >
-                {isSubmitting ? (
+                {(isSubmitting || isUploading) ? (
                   <div className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Creating Account...
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isSubmitting ? "Creating Account..." : "Uploading Image..."}
                   </div>
                 ) : "Start Free Trial"}
               </Button>
@@ -563,15 +649,6 @@ export default function OwnerRegister() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Verification Modal */}
-      {/* <VerificationModal
-        isOpen={showVerificationModal}
-        onClose={() => setShowVerificationModal(false)}
-        onVerify={handleVerification}
-        email={formData.emailId}
-        isVerifying={isVerifying}
-      /> */}
     </div>
   );
 }

@@ -9,17 +9,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import router from './routes/api.js';
-// // Import routes
-// import authRoutes from './routes/auth.js';
-// import userRoutes from './routes/users.js';
-// import gymRoutes from './routes/gyms.js';
-// import memberRoutes from './routes/members.js';
-// import membershipRoutes from './routes/memberships.js';
-// import qrRoutes from './routes/qr.js';
-// import analyticsRoutes from './routes/analytics.js';
-// import paymentRoutes from './routes/payments.js';
-// import notificationRoutes from './routes/notifications.js';
-// // import gymOwnerRoutes from './routes/gymOwners.js';
+
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -27,7 +17,7 @@ import { notFound } from './middleware/notFound.js';
 import { logger } from './utils/logger.js';
 
 // Import database connection
-import  sequelize  from './config/database.js';
+import sequelize from './config/database.js';
 
 // Load environment variables
 dotenv.config();
@@ -44,7 +34,7 @@ sequelize.authenticate()
   .then(() => console.log("✅ Connected to PostgreSQL"))
   .catch(err => console.error("❌ Error:", err)); 
 sequelize.sync(); 
-// Security middleware
+// // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -83,7 +73,7 @@ const speedLimiter = slowDown({
   delayMs: 500, // begin adding 500ms of delay per request above 50
 });
 sequelize.sync({ alter: true });
-
+app.use('/public', express.static(path.join(__dirname, './public')));
 app.use('/api/', limiter);
 app.use('/api/', speedLimiter);
 
@@ -102,46 +92,13 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Static files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 
 
 // API routes
 app.use('/api', router);
 
-
-
-// app.use(`/api/${API_VERSION}/auth`, authRoutes);
-// app.use(`/api/${API_VERSION}/users`, userRoutes);
-// app.use(`/api/${API_VERSION}/gyms`, gymRoutes);
-// app.use(`/api/${API_VERSION}/members`, memberRoutes);
-// app.use(`/api/${API_VERSION}/memberships`, membershipRoutes);
-// app.use(`/api/${API_VERSION}/qr`, qrRoutes);
-// app.use(`/api/${API_VERSION}/analytics`, analyticsRoutes);
-// app.use(`/api/${API_VERSION}/payments`, paymentRoutes);
-// app.use(`/api/${API_VERSION}/notifications`, notificationRoutes);
-// // app.use(`/api/${API_VERSION}/gym-owners`, gymOwnerRoutes);
-
-// // API documentation
-// app.get(`/api/${API_VERSION}`, (req, res) => {
-//   res.json({
-//     message: 'GymPro API',
-//     version: API_VERSION,
-//     endpoints: {
-//       auth: `/api/${API_VERSION}/auth`,
-//       users: `/api/${API_VERSION}/users`,
-//       gyms: `/api/${API_VERSION}/gyms`,
-//       gymOwners: `/api/${API_VERSION}/gym-owners`,
-//       members: `/api/${API_VERSION}/members`,
-//       memberships: `/api/${API_VERSION}/memberships`,
-//       qr: `/api/${API_VERSION}/qr`,
-//       analytics: `/api/${API_VERSION}/analytics`,
-//       payments: `/api/${API_VERSION}/payments`,
-//       notifications: `/api/${API_VERSION}/notifications`,
-//     },
-//     documentation: '/api/docs',
-//   });
-// });
 
 // 404 handler
 app.use(notFound);

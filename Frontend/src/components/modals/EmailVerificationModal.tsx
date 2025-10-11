@@ -4,26 +4,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {Mail} from "lucide-react";
 import { toast } from "sonner";
-
+import { useDispatch,useSelector } from "react-redux";
+import { RootState,AppDispatch } from "@/store";
+import { resendEmailVerificationFeth } from "@/store/gymOwnerAuth/gymOwnerAuthThunks";
 const EmailVerificationModal= ({ 
   isOpen, 
-  onClose, 
   onVerify, 
   email="a", 
   isVerifying 
-}: { 
+}: {      
   isOpen: boolean; 
-  onClose: () => void; 
   onVerify: (code: string) => void; 
   email: string;
-  isVerifying: boolean;
+  isVerifying: boolean;   
 }) => {
   const [verificationCode, setVerificationCode] = useState("");
-
+  const [seding,setSending]=useState(false)
+  const dispatch = useDispatch<AppDispatch>();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault(); // Prevent form submission
     onVerify(verificationCode);
   };
+
+  const resendEmail = async() => {
+    // Implement resend email logic here
+    setSending(true)
+    await dispatch(resendEmailVerificationFeth());
+    setSending(false)
+  }
 
   if (!isOpen) return null;
 
@@ -69,14 +77,14 @@ const EmailVerificationModal= ({
               {isVerifying ? "Verifying..." : "Verify Account"}
             </Button>
             
-            <Button
+            {/* <Button
               type="button"
               variant="outline"
               className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
               onClick={onClose}
             >
               Cancel
-            </Button>
+            </Button> */}
           </div>
 
           <div className="text-center text-sm text-slate-400 pt-2">
@@ -84,9 +92,9 @@ const EmailVerificationModal= ({
             <button 
               type="button" 
               className="text-orange-400 hover:text-orange-300"
-              onClick={() => toast.info("Resend code functionality would go here")}
+              onClick={resendEmail}
             >
-              Resend
+              {seding?"Sending...":"Resend Code"}
             </button>
           </div>
         </form>

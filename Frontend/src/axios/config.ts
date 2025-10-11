@@ -2,14 +2,16 @@ import axios, { AxiosInstance, AxiosResponse, AxiosError, InternalAxiosRequestCo
 
 interface configType{
     baseURL:string;
-    timeout: number,
     headers:object
+    keepalive:boolean
 }
-const config:configType={
+export const config:configType={
     baseURL:'http://localhost:5000',
-    timeout: 10000,
+    keepalive: true,
     headers: {
-      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+      'X-Requested-With': 'XMLHttpRequest',
     },
 }
 
@@ -30,17 +32,4 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
-// api.interceptors.response.use(
-//   (response: AxiosResponse) => response,
-//   (error: AxiosError) => {
-//     if (error.response?.status === 401) {
-//       // Token expired or invalid
-//       localStorage.removeItem('gymOwnerToken');
-//       window.location.href = '/login';
-//     }
-//     return Promise.reject(error);
-//   }
-// );
-
-  export default api;
+export default api;

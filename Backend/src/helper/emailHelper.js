@@ -5,11 +5,11 @@ import {config} from '../config.js';
 const createTransporter = () => {
   // For production, use your actual SMTP credentials
   // For development, you can use a service like Ethereal or Mailtrap
-  console.log("Config in emailHelper",config.HOST,config. PORT,config.USER)
+  console.log("Config in emailHelpedsr",config.HOST,config. PORT,config.USER,config.SECURE)
   const option={
     host: config.HOST,
     port: config.PORT,
-    // secure: config.SMTP_SECURE, // true for 465, false for other ports
+    secure: config.SECURE, // true for 465, false for other ports
     auth: {
       user: config.USER,
       pass: config.PASS,
@@ -84,14 +84,14 @@ export const sendPasswordResetEmail = async (to,resetToken,userName) => {
         </div>
       `,
     };
-
+    console.log("Mail options",mailOptions.from)
     // Send the email
     const info = await transporter.sendMail(mailOptions);
-    console.log('Message sent: %s', info.messageId);
+    console.log("Message sent:", info);
     return {
       success: true,
-      messageId: info.messageId,
-      preview: nodemailer.getTestMessageUrl(info)
+      // messageId: info.messageId,
+      // preview: nodemailer.getTestMessageUrl(info)
     };
   } catch (error) {
     console.error('Error sending password reset email:', error);
@@ -192,7 +192,7 @@ export const sendEmailVerification = async (to, verificationCode, userName) => {
 
     // Send the email
     const info = await transporter.sendMail(mailOptions);
-    console.log('Verification email sent: %s', info.messageId);
+    console.log('Verification email se', info.messageId);
     
     return {
       success: true,

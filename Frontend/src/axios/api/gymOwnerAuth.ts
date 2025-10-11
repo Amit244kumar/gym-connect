@@ -70,6 +70,14 @@ const gymOnwerAuth=(instance:AxiosInstance)=>({
             return error;
         }   
     },
+    resendEmailVerification:async()=>{
+        try {
+            const {data}=await instance.post<ApiResponse>(`${baseURL}/resend-Email-Verification`)
+            return data
+        } catch (error) {
+            return error;
+        }
+    },
     verifyEmail:async(code:string)=>{
         try {
             const {data}=await instance.post<ApiResponse>(`${baseURL}/verify-email`,{code})

@@ -10,9 +10,10 @@ import {
   forgotPassword,
   resetPassword,
   verifyResetToken,
-  verifyEmail
+  verifyEmail,
+  resendEmailVerification
 } from '../controller/gymOwnerAuth.js';
-
+import upload from '../helper/uploadImage.js';
 import {
   validateGymOwnerRegistration,
   validateGymNameUnique,
@@ -33,7 +34,8 @@ const router = express.Router();
 
 // POST /api/gym-owner/register
 // Register a new gym owner
-router.post('/register', validateGymOwnerRegistration, registerGymOwner);
+router.post('/register',upload.single("profileImage"), validateGymOwnerRegistration, registerGymOwner);
+
 router.get('/check-gym-name/:gymName', isGymNameUnique);
 // POST /api/gym-owner/login
 // Login gym owner
@@ -75,6 +77,7 @@ router.post('/refresh-token', authMiddleware, refreshToken);
 // Reset password with token
 router.put('/reset-password/:token', validateResetPassword, resetPassword);
 
+router.post('/resend-Email-Verification',authMiddleware,resendEmailVerification);
 // POST /api/gym-owner/verify-email
 // Verify email address
 router.post('/verify-email',authMiddleware,verifyEmail);
