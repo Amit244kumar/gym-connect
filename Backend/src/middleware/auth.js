@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 import GymOwner from '../models/gymOwner.js';
-import { logger } from '../utils/logger.js';
 
 const authMiddleware = async (req, res, next) => {
   let token;
@@ -23,7 +22,6 @@ const authMiddleware = async (req, res, next) => {
       req.user = owner;
       next();
     } catch (error) {
-      logger.error('Token verification failed:', error.message);
       return res.status(401).json({
         success: false,
         error: 'Not authorized to access this route',

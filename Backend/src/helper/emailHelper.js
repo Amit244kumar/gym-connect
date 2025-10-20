@@ -208,6 +208,93 @@ export const sendEmailVerification = async (to, verificationCode, userName) => {
     };
   }
 };
+export const sendMemberWelcomeEmail = async (to, tempPassword, userName, gymName) => {
+
+    const transporter = createTransporter();
+    console.log("Transporter", transporter);
+    
+    // Verify connection configuration
+    await transporter.verify();
+    console.log('SMTP server is ready to take messages');
+    
+    // Create the login URL - adjust this based on your frontend URL
+    const loginUrl = `${config.FRONTEND_URL}login`;
+    
+    // Email content
+    const mailOptions = {
+      from: "GymPro <noreply@gympro.com>",
+      to,
+      subject: `Welcome to ${gymName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #f97316; margin: 0; font-size: 28px;">GymPro</h1>
+            <p style="margin: 10px 0; color: #64748b;">Your Fitness Management Platform</p>
+          </div>
+          
+          <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+            <h2 style="color: #1e293b; margin-top: 0;">Welcome to ${gymName || 'Our Gym'}!</h2>
+            <p style="margin-bottom: 20px; line-height: 1.5;">
+              ${userName ? `Hi ${userName},` : 'Hello,'}
+            </p>
+            <p style="margin-bottom: 20px; line-height: 1.5;">
+              We're excited to welcome you as a new member of ${gymName}! Your account has been successfully created, and you're now ready to start your fitness journey with us.
+            </p>
+            
+            <div style="background-color: #f1f5f9; padding: 15px; border-radius: 6px; margin: 25px 0;">
+              <h3 style="margin-top: 0; color: #334155; font-size: 16px;">Your Login Credentials:</h3>
+              <p style="margin: 10px 0; font-size: 14px;"><strong>Email:</strong> ${to}</p>
+              <p style="margin: 10px 0; font-size: 14px;"><strong>Temporary Password:</strong> <span style="background-color: #e2e8f0; padding: 2px 6px; border-radius: 3px; font-family: monospace;">${tempPassword}</span></p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${loginUrl}" style="background-color: #f97316; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">
+                Login to Your Account
+              </a>
+            </div>
+            
+            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 15px; margin: 20px 0; border-radius: 4px;">
+              <p style="margin: 0; font-size: 14px; color: #92400e;">
+                <strong>Security Notice:</strong> For your security, please change your password after your first login.
+              </p>
+            </div>
+            
+            <p style="margin-bottom: 20px; line-height: 1.5;">
+              If you have any questions about your membership or need help getting started, don't hesitate to contact our support team.
+            </p>
+            
+            <p style="margin-bottom: 0; line-height: 1.5;">
+              We look forward to helping you achieve your fitness goals!
+            </p>
+          </div>
+          
+          <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 14px; color: #64748b;">
+            <p style="margin: 0 0 10px 0;">
+              If you're having trouble clicking the login button, copy and paste the following URL into your web browser:
+            </p>
+            <p style="margin: 0; word-break: break-all;">
+              ${loginUrl}
+            </p>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; text-align: center;">
+            <p style="margin: 0 0 10px 0;">
+              © ${new Date().getFullYear()} GymPro. All rights reserved.
+            </p>
+            <p style="margin: 0;">
+              If you have questions, contact our support team at support@gympro.com
+            </p>
+          </div>
+        </div>
+      `,
+    };
+    
+    console.log("Mail options", mailOptions.from);
+    
+    // Send the email
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Message sent:", info);
+};
 
 export const sendWelcomeEmail = async (to, userName, loginUrl) => {
   try {

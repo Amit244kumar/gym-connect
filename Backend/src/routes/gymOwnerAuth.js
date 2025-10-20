@@ -13,7 +13,7 @@ import {
   verifyEmail,
   resendEmailVerification
 } from '../controller/gymOwnerAuth.js';
-import upload from '../helper/uploadImage.js';
+import {uploadOwner} from '../helper/uploadImage.js';
 import {
   validateGymOwnerRegistration,
   validateGymNameUnique,
@@ -23,7 +23,7 @@ import {
   validateForgotPassword,
   validateResetPassword,
   
-} from '../utils/validation.js';
+} from '../validator/gymOwnerAuth.js';
 
 import authMiddleware from '../middleware/auth.js';
 
@@ -34,7 +34,7 @@ const router = express.Router();
 
 // POST /api/gym-owner/register
 // Register a new gym owner
-router.post('/register',upload.single("profileImage"), validateGymOwnerRegistration, registerGymOwner);
+router.post('/register',uploadOwner.single("profileImage"), validateGymOwnerRegistration, registerGymOwner);
 
 router.get('/check-gym-name/:gymName', isGymNameUnique);
 // POST /api/gym-owner/login

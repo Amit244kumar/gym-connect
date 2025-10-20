@@ -1,4 +1,3 @@
-import { toast } from "sonner";
 import { RegisterResponse,ApiResponse,RegisterUserData,LoginResponse,LoginCredentials, GymOwner } from "@/type/gymOwnerTypes";
 import { AxiosInstance } from "axios";
 const baseURL:string="/api/gymOnwerAuth"

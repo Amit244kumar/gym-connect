@@ -11,7 +11,7 @@ function toSlug(value) {
     .replace(/(^-|-$)+/g, '');
 }
 
-class GymOwner extends Model {
+export class GymOwner extends Model {
   async comparePassword(candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
   }

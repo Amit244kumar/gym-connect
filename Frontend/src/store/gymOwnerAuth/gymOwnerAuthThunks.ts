@@ -14,7 +14,6 @@ import {
 } from '../../type/gymOwnerTypes'
 import { toast } from 'sonner';
 
-
 // Register Gym Owner
 export const registerGymOwnerFeth = createAsyncThunk<any,RegisterUserData,ThunkApiConfig>(
   'registerGymOwnerFeth',

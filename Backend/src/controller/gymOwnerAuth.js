@@ -1,4 +1,4 @@
-import  GymOwner  from '../models/gymOwner.js';
+import { GymOwner } from '../models/index.js';
 import { validationResult } from 'express-validator';
 import { generateToken, generateEmailVerificationToken, generatePhoneVerificationOTP } from '../utils/helper.js';
 import { sendEmailVerification, sendPasswordResetEmail } from '../helper/emailHelper.js';
@@ -262,7 +262,7 @@ export const getProfile = async (req, res) => {
       success: true,
       message: 'Profile fetched successfully',
       data: {
-        profileImage: owner.ownerPhoto,
+        profileImage: `owner/${owner.ownerPhoto}`,
         ...owner.dataValues,
         trialInfo: {
           totalTrialDays,

@@ -65,9 +65,8 @@ document.head.appendChild(style);
 
 const OwnerDashboard = () => {
   const dispatch = useDispatch<AppDispatch>()
-  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [isOwnerProfileModalOpen, setIsOwnerProfileModalOpen] = useState(false);
-  const { owner, token, isAuthenticated, isLoading } = useSelector((state: RootState) => state.gymOwnerAuth)
+  const { owner, isLoading } = useSelector((state: RootState) => state.gymOwnerAuth)
   const [recentMembers, setRecentMembers] = useState([]);
   const [checkInData, setCheckInData] = useState([]);
   const [membershipData, setMembershipData] = useState([]);

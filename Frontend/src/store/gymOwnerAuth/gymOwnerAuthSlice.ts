@@ -11,8 +11,8 @@ import {
   verifyEmailFeth,
   resendEmailVerificationFeth
 } from "./gymOwnerAuthThunks"
-import {GymOwner,GymOwnerAuthState,CredentialsPayload} from "../../type/gymOwnerTypes"
-import { stat } from 'fs';
+import {GymOwnerAuthState,CredentialsPayload} from "../../type/gymOwnerTypes"
+
 
 
 

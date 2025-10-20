@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-
+import {config} from '../config.js';
 // Generate JWT token
 export const generateToken = (owner) => {
   return jwt.sign(
@@ -10,7 +10,7 @@ export const generateToken = (owner) => {
       gymName: owner.gymName,
       role: 'gym_owner' 
     },
-    process.env.JWT_SECRET 
+    config.JWT_SECRET,
   );
 };
 

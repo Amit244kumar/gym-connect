@@ -22,6 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-src/public/profileImage/
+src/public/member/
+src/public/owner/
 .config/
 .env

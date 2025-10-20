@@ -44,7 +44,7 @@ import Help from './owner/Help';
                   <Route path="/owner/profile/:gymName" element={<Profile />} />
                   <Route path="/owner/members" element={<Members />} />
                   <Route path="/owner/members/checkin" element={<CheckIn />} />
-                  <Route path="/owner/membersipPlan" element={<MembershipPlan />} />
+                  <Route path="/owner/membershipPlan" element={<MembershipPlan />} />
                   <Route path="/owner/reports" element={<Reports />} />
                   <Route path="/owner/notifications" element={<Notifications />} />
                   <Route path="/owner/messages" element={<Messages />} />

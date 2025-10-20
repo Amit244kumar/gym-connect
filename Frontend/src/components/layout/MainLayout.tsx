@@ -120,7 +120,7 @@ const MainLayout = () => {
     { name: 'Dashboard', icon: Home, path: `/owner/dashboard/${slug}` },
     { name: 'Members', icon: Users, path: '/owner/members' },
     { name: 'Check-in', icon: QrCode, path: '/owner/members/checkin' },
-    { name: 'Membership Plans', icon: CreditCard, path: 'owner/membersipPlan' },
+    { name: 'Membership Plans', icon: CreditCard, path: 'owner/membershipPlan' },
     { name: 'Reports', icon: BarChart3, path: '/owner/reports' },
     { name: 'Notifications', icon: Bell, path: '/owner/notifications' },
     { name: 'Messages', icon: MessageSquare, path: '/owner/messages' },
@@ -383,7 +383,7 @@ const MainLayout = () => {
 
           {/* Page Content */}
           <main className="p-6 main-scrollbar overflow-y-auto">
-            <Outlet />
+            <Outlet  />
           </main>
         </div>
       </div>
