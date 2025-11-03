@@ -9,7 +9,8 @@ import {
   verifyResetPasswordTokenFeth,
   resetPasswordFeth,
   verifyEmailFeth,
-  resendEmailVerificationFeth
+  resendEmailVerificationFeth,
+  updateGymOwnerProfileFeth
 } from "./gymOwnerAuthThunks"
 import {GymOwnerAuthState,CredentialsPayload} from "../../type/gymOwnerTypes"
 
@@ -170,19 +171,18 @@ const gymOwnerAuthSlice = createSlice({
       .addCase(verifyEmailFeth.rejected, (state) => {  
         state.isLoading = false;
       })
-    // // Update Profile
-    //   .addCase('gymOwnerAuth/updateProfile/pending', (state) => {
-    //     state.isLoading = true;
-    //     state.error = null;
-    //   })
-    //   .addCase('gymOwnerAuth/updateProfile/fulfilled', (state) => {
-    //     state.isLoading = false;
-    //     state.error = null;
-    //   })
-    //   .addCase('gymOwnerAuth/updateProfile/rejected', (state, action) => {
-    //     state.isLoading = false;
-    //     state.error = action.payload || 'Failed to update profile';
-    //   })
+    // Update Profile
+      .addCase(updateGymOwnerProfileFeth.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(updateGymOwnerProfileFeth.fulfilled, (state,action) => {
+        state.isLoading = false;
+        console.log("Update Profil:",action.payload.data)
+        state.owner=action.payload?.data
+      })
+      .addCase(updateGymOwnerProfileFeth.rejected, (state, action) => {
+        state.isLoading = false;
+      })
 
     // // Change Password
     //   .addCase('gymOwnerAuth/changePassword/pending', (state) => {

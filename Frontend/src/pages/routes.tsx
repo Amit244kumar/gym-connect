@@ -41,7 +41,6 @@ import Help from './owner/Help';
                 
                 <Route element={<MainLayout />} >
                   <Route path="/owner/dashboard/:gymName" element={<OwnerDashboard />} />
-                  <Route path="/owner/profile/:gymName" element={<Profile />} />
                   <Route path="/owner/members" element={<Members />} />
                   <Route path="/owner/members/checkin" element={<CheckIn />} />
                   <Route path="/owner/membershipPlan" element={<MembershipPlan />} />
@@ -50,6 +49,7 @@ import Help from './owner/Help';
                   <Route path="/owner/messages" element={<Messages />} />
                   <Route path="/owner/settings" element={<Settings />} />
                   <Route path="/owner/help" element={<Help />} />
+                  <Route path="/owner/profile/:gymName" element={<Profile />} />
                 </Route>
                 <Route path="/member/dashboard"  element={<MemberDashboard />}>
                           

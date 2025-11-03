@@ -23,7 +23,8 @@ import { useNavigate } from "react-router-dom";
 import { LoginCredentials } from "@/type/gymOwnerTypes";
 // Import the new ForgetPassword component
 import ForgetPassword from "../components/modals/ForgetPassword";
-
+import { loginMemberFeth } from "@/store/memberAuth/memberAuthThunk";
+import { memberlogin } from "@/type/memberTypes"; 
 type MemberLoginForm = yup.InferType<typeof memberLoginSchema>;
 type OwnerLoginForm = yup.InferType<typeof ownerLoginSchema>;
 
@@ -53,9 +54,18 @@ export default function Login() {
     mode: "onSubmit",
   });
   const [isSubmitting,setIsSubmitting]=useState(false)
-  const onMemberSubmit = (data: MemberLoginForm) => {
+  const onMemberSubmit = async (data: memberlogin) => {
     // Handle member login
     console.log("Member login:", data);
+    setIsSubmitting(true)
+    try {
+      await dispatch(loginMemberFeth(data)).unwrap();
+      navigate("/member/dashboard")
+    } catch (error) {
+      console.error("Login failed:", error);
+    }finally{
+      setIsSubmitting(false)
+    }
   };
 
   const onOwnerSubmit = async(data: OwnerLoginForm, e?: React.BaseSyntheticEvent) => {

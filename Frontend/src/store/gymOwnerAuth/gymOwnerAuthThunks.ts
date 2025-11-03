@@ -213,39 +213,29 @@ export const verifyEmailFeth = createAsyncThunk<{ success: boolean; message: str
   }
 );
 
-// // Update Profile
-// export const updateGymOwnerProfile = createAsyncThunk<
-//   { success: boolean; message: string; owner: GymOwner },
-//   ProfileUpdateData,
-//   ThunkApiConfig
-// >(
-//   'gymOwnerAuth/updateProfile',
-//   async (profileData, { dispatch, rejectWithValue }) => {
-//     try {
-//       dispatch(setLoading(true));
-//       dispatch(clearError());
-      
-//       const response = await api.put<ApiResponse<ProfileResponse>>('/gym-owner/profile', profileData);
-      
-//       if (response.data.success) {
-//         const { owner } = response.data.data;
-        
-//         // Update profile in store
-//         dispatch(updateProfile(owner));
-        
-//         return { success: true, message: response.data.message, owner };
-//       } else {
-//         return rejectWithValue(response.data.message || 'Failed to update profile');
-//       }
-//     } catch (error: any) {
-//       const errorMessage = error.response?.data?.message || error.message || 'Failed to update profile';
-//       dispatch(setError(errorMessage));
-//       return rejectWithValue(errorMessage);
-//     } finally {
-//       dispatch(setLoading(false));
-//     }
-//   }
-// );
+// Update Profile
+export const updateGymOwnerProfileFeth = createAsyncThunk<
+{ success: boolean; message: string; data: GymOwner },
+  ProfileUpdateData,
+  ThunkApiConfig
+>(
+  'updateGymOwnerProfileFeth/updateGymOwnerProfile',
+  async (profileData, { rejectWithValue }) => {
+    try {
+      const response = await api.gymOnwerAuth.updateGymOwnerProfile(profileData);
+
+      if (response.success) {
+        toast.success(response.message)
+        return response
+      } else {
+        toast.error(response.response?.data?.message)
+        return rejectWithValue(response?.data?.message || 'Failed to update profile');
+      }
+    } catch (error: any) {
+      return rejectWithValue(error .response?.data?.message || error.message || 'Failed to update profile');
+    }
+  }
+);
 
 
 

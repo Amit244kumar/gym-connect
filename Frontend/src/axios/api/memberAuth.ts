@@ -1,5 +1,5 @@
 import { AxiosInstance } from "axios"
-import { ApiResponse,MemberQueryParams,memberData } from "@/type/memberTypes"
+import { ApiResponse,MemberQueryParams,memberData,memberlogin } from "@/type/memberTypes"
 const baseURL:string="/api/memberAuth"
 const memberAuth=(instance:AxiosInstance)=>({
     addMember:async(memberData:memberData)=>{
@@ -9,6 +9,14 @@ const memberAuth=(instance:AxiosInstance)=>({
             return data
         } catch (error) {
             return error;
+        }
+    },
+    loginMember:async(payload:memberlogin)=>{
+        try {
+            const {data}=await instance.post<ApiResponse>(`${baseURL}/loginMember`,payload)
+            return data
+        } catch (error) {
+            return error
         }
     },
     getAllMembers:async(params:MemberQueryParams)=>{

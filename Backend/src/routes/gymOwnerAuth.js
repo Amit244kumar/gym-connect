@@ -48,7 +48,12 @@ router.get('/owner-profile', authMiddleware, getProfile);
 
 // PUT /api/gym-owner/profile
 // Update gym owner profile
-router.put('/profile', authMiddleware, validateGymOwnerProfileUpdate, updateProfile);
+router.put('/update-profile', 
+  authMiddleware,
+  uploadOwner.single("profileImage"), 
+  validateGymOwnerProfileUpdate, 
+  updateProfile
+);
 
 // POST /api/gym-owner/forgot-password
 // Send password reset email

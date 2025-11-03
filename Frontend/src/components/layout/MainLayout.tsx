@@ -225,9 +225,9 @@ const MainLayout = () => {
           {/* User Profile Section */}
           <div className="p-4 border-b border-slate-700 flex-shrink-0">
             <div className="flex items-center space-x-3">
-              {owner?.profileImage ? (
+              {owner?.ownerPhoto ? (
                 <img
-                  src={getFullImageUrl(owner.profileImage)}
+                  src={getFullImageUrl(owner.ownerPhoto)}
                   alt="Profile"
                   className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
                   crossOrigin="anonymous"

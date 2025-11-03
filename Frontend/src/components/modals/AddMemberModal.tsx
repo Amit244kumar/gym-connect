@@ -165,7 +165,9 @@ function AddMemberModal({ onClose }) {
     }
     
     // Dispatch with FormData
-    await dispatch(addMemberFeth(formData)).unwrap();
+    const res=await dispatch(addMemberFeth(formData)).unwrap();
+    console.log("Membersddcfsy:", res);
+    reset(); // Reset form after submission
     onClose(); // Close the modal after submission
   };
 

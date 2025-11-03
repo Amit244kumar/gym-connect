@@ -1,3 +1,7 @@
+export interface memberlogin {
+    email:string
+    password:string
+}
 export interface memberData{
     name: string
     email: string
@@ -17,6 +21,7 @@ export interface Member {
   membershipStartDate: string;
   membershipEndDate: string;
   membershipStatus: "active" | "expired" | "cancelled";
+  membershipExpireInDays: number;
   lastVisit?: string;
   gender?: string;
   address?: string;

@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {CredentialsPayload, memberAuthState,Member} from "../../type/memberTypes"
-import { addMemberFeth, getAllMembersFeth } from './memberAuthThunk';
+import { addMemberFeth, getAllMembersFeth, loginMemberFeth } from './memberAuthThunk';
 const initialState:memberAuthState={
     memberData:[], 
     token:localStorage.getItem("memberToken"),
@@ -25,7 +25,8 @@ const memberAuthSlice=createSlice({
         })
         .addCase(addMemberFeth.fulfilled,(state,action)=>{
             state.isLoading=false
-            state.isAdded=state.isAdded=!state.isAdded
+            console.log("actiofsdf",action.payload)
+            state.isAdded=!state.isAdded
         })
         .addCase(addMemberFeth.rejected,(state,action)=>{
             state.isLoading=false
@@ -39,6 +40,16 @@ const memberAuthSlice=createSlice({
             state.memberData=action.payload?.data?.members
         })
         .addCase(getAllMembersFeth.rejected,(state,action)=>{
+            state.isLoading=false
+        })
+        .addCase(loginMemberFeth.pending,(state,action)=>{
+            state.isLoading=true
+        })
+        .addCase(loginMemberFeth.fulfilled,(state,action)=>{
+            localStorage.setItem("memberToken",action.payload)
+            state.token=action.payload
+        })
+        .addCase(loginMemberFeth.rejected,(state,action)=>{
             state.isLoading=false
         })
     }

@@ -76,13 +76,12 @@ const OwnerDashboard = () => {
   // Mock data for demonstration
   useEffect(() => {
     // In a real app, this would come from an API
-    setRecentMembers([
-      { id: 1, name: 'John Doe', plan: 'Premium', joinDate: '2023-05-15', status: 'Active' },
-      { id: 2, name: 'Jane Smith', plan: 'Basic', joinDate: '2023-05-18', status: 'Active' },
-      { id: 3, name: 'Mike Johnson', plan: 'Standard', joinDate: '2023-05-20', status: 'Expired' },
-      { id: 4, name: 'Sarah Williams', plan: 'Premium', joinDate: '2023-05-22', status: 'Active' },
-      { id: 5, name: 'David Brown', plan: 'Basic', joinDate: '2023-05-24', status: 'Active' },
-    ]);
+    if (owner?.recentMembers && Array.isArray(owner.recentMembers)) {
+        setRecentMembers(owner.recentMembers);
+    } else {
+      setRecentMembers([]);
+      console.log("No recent members data found or invalid format");
+    }
     
     setCheckInData([
       { time: '6 AM', count: 12 },
@@ -100,7 +99,7 @@ const OwnerDashboard = () => {
       { name: 'Standard', value: 30, color: '#8b5cf6' },
       { name: 'Premium', value: 25, color: '#ec4899' },
     ]);
-  }, []);
+  }, [owner]);
 
   // useEffect(() => {
   //   const fetchProfile = async () => {
@@ -146,7 +145,7 @@ const OwnerDashboard = () => {
   
 
   const handleViewAllMembers = () => {
-    navigate('/members');
+    navigate('/owner/members');
   };
 
   // const handleViewReports = () => {
@@ -164,7 +163,8 @@ const OwnerDashboard = () => {
       default: return "";
     }
   };
-
+  console.log("Ownesdfsda",owner);
+  console.log("fsqwwrxv",recentMembers)
   return (
     <>
         <div className="space-y-6">
@@ -172,7 +172,7 @@ const OwnerDashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard 
               title="Total Members" 
-              value="128" 
+              value={owner ? owner?.totalMembers : isLoading ? '' : '--'  } 
               change="+12% from last month" 
               icon={Users} 
               iconColor="bg-blue-500/20" 
@@ -221,7 +221,7 @@ const OwnerDashboard = () => {
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-lg font-medium text-white">Recent Members</CardTitle>
                   <Button 
-                    variant="ghost" 
+                   
                     size="sm" 
                     className="text-orange-400 hover:text-orange-300"
                     onClick={handleViewAllMembers}

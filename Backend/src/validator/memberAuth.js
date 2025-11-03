@@ -23,5 +23,18 @@ const ValidationMemberRegister = [
     return true;
   })
 ];
+const validateMemberLogin = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please enter a valid email address')
+    .normalizeEmail(),
 
-export { ValidationMemberRegister };
+  body('password')
+    .trim()
+    .notEmpty()
+    .withMessage('Password is required'),
+];
+export { ValidationMemberRegister,validateMemberLogin };

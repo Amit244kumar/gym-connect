@@ -1,13 +1,18 @@
-import { GymOwner } from '../models/index.js';
+import { GymOwner, Member } from '../models/index.js';
 import { validationResult } from 'express-validator';
-import { generateToken, generateEmailVerificationToken, generatePhoneVerificationOTP } from '../utils/helper.js';
+import {  generateEmailVerificationToken, generatePhoneVerificationOTP, generateOwnerToken } from '../utils/helper.js';
 import { sendEmailVerification, sendPasswordResetEmail } from '../helper/emailHelper.js';
 import crypto from "crypto";
 import Sequelize from 'sequelize'; // Import Sequelize
 const Op = Sequelize.Op; // Then get Op from it
+import fs  from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Gym Owner Registration
-export const registerGymOwner = async (req, res) => {
+export const registerGymOwner = async (req, res) => { 
   try {
       // Validate input
       const errors = validationResult(req);
@@ -59,7 +64,7 @@ export const registerGymOwner = async (req, res) => {
         phone,
         password,
         gymName,
-        ownerPhoto: req.file ? req.file.filename : null, // Save file path if uploaded
+        ownerPhoto: req.file ? `owner/${req.file.filename}` : null, // Save file path if uploaded
         subscriptionPlanType: 'trial',
         subscriptionStatus: 'active',
         trialStart: new Date(),
@@ -79,7 +84,7 @@ export const registerGymOwner = async (req, res) => {
       await gymOwner.save();
 
       // Generate JWT token
-      const token = generateToken(gymOwner);
+      const token = generateOwnerToken(gymOwner);
       
       // Send email verification
       await sendEmailVerification(email, emailVerificationToken, ownerName);
@@ -207,7 +212,7 @@ export const loginGymOwner = async (req, res) => {
 
 
     // Generate JWT token
-    const token = generateToken(owner);
+    const token = generateOwnerToken(owner);
     // // Update last login and login count
     // await owner.update({
     //   lastActive: new Date()
@@ -247,6 +252,16 @@ export const getProfile = async (req, res) => {
       });
     }
 
+    const members = await Member.count({
+      where: { ownerId }
+    });
+    const recentMembers = await Member.findAll({
+      where: { ownerId },
+      attributes: { exclude: ['password','resetpasswordToken','resetpasswordExpires'] },
+      order: [['createdAt', 'DESC']],
+      limit: 5
+    });
+    console.log("Members Count",members)
     // Calculate trial days information
     const trialStart = new Date(owner.trialStart);
     const trialEnd = new Date(owner.trialEnd);
@@ -262,14 +277,16 @@ export const getProfile = async (req, res) => {
       success: true,
       message: 'Profile fetched successfully',
       data: {
-        profileImage: `owner/${owner.ownerPhoto}`,
+        totalMembers:members,
         ...owner.dataValues,
         trialInfo: {
           totalTrialDays,
           daysLeft: Math.max(0, daysLeft),
           trialStatus: today <= trialEnd ? 'active' : 'expired',
           isTrialActive: today <= trialEnd
-        }
+        },
+        totalMembers:members,
+        recentMembers
       }
     });
 
@@ -278,7 +295,6 @@ export const getProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get profile',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 };
@@ -287,13 +303,18 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const ownerId = req.user.id;
-    const updateData = req.body;
+    const { ownerName, gymName } = req.body;
+    const errors = validationResult(req);
+    
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
 
-    // Remove fields that shouldn't be updated
-    delete updateData.email; // Email shouldn't be changed
-    delete updateData.gymName; // Gym name shouldn't be changed
-    delete updateData.password; // Password update handled separately
-
+    console.log("Request data:", req.file, ownerName, gymName);
+    
     const owner = await GymOwner.findByPk(ownerId);
     if (!owner) {
       return res.status(404).json({
@@ -302,29 +323,97 @@ export const updateProfile = async (req, res) => {
       });
     }
 
-    // Update owner
-    await owner.update(updateData);
+    if (gymName) {
+      // Check if gym name already exists
+      const existingGym = await GymOwner.findOne({
+        where: {
+          gymName,
+          id: { [Op.ne]: ownerId } // Exclude current owner
+        }
+      });
+      if (existingGym) {
+        return res.status(409).json({
+          success: false,
+          message: 'Gym name already taken'
+        });
+      }
+    }
+
+    let oldImageFilename = null;
+    console.log("Reqfile", req.file);
+    
+    // Store the old image filename before any updates
+    if (owner.ownerPhoto) {
+      oldImageFilename = owner.ownerPhoto;
+    }
+
+    // Update owner data
+    const updateData = { ownerName, gymName };
+    
+    if (req.file) {
+      updateData.ownerPhoto = `owner/${req.file.filename}`;
+    }
+
+    const updatedOwner = await owner.update(updateData);
 
     // Remove password from response
-    const ownerData = owner.toJSON();
+    const ownerData = updatedOwner.toJSON();
     delete ownerData.password;
+    console.log("UpdatedData ", ownerData);
 
+    // Delete old image file after successful update
+    if (req.file && oldImageFilename) {
+      console.log('Old image to delete:', oldImageFilename);
+      
+      // Use absolute path instead of relative path
+      const oldImagePath = path.join(__dirname, '..', 'public', oldImageFilename);
+      console.log("Old image path:", oldImagePath);
+      
+      try {
+        // Check if file exists before trying to delete
+        await fs.access(oldImagePath);
+        await fs.unlink(oldImagePath);
+        console.log('Old image deleted successfully:', oldImageFilename);
+      } catch (unlinkError) {
+        if (unlinkError.code === 'ENOENT') {
+          console.log('Old image file not found, skipping deletion:', oldImageFilename);
+        } else {
+          console.error('Error deleting old image:', unlinkError);
+        }
+        // Don't throw error here, as the main operation was successful
+      }
+    }
+    const trialStart = new Date(ownerData.trialStart);
+    const trialEnd = new Date(ownerData.trialEnd);
+    const today = new Date();
+
+    const diffTime = trialEnd - trialStart;
+    const totalTrialDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const timeUntilTrialEnd = trialEnd - today;
+    const daysLeft = Math.ceil(timeUntilTrialEnd / (1000 * 60 * 60 * 24));
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      data: { owner: ownerData }
+      data: {
+        ...ownerData,
+        trialInfo: {
+          totalTrialDays,
+          daysLeft: Math.max(0, daysLeft),
+          trialStatus: today <= trialEnd ? 'active' : 'expired',
+          isTrialActive: today <= trialEnd
+      }
+      }
     });
 
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error('Error updating profile:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update profile',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 };
- 
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -664,7 +753,7 @@ export const refreshToken = async (req, res) => {
     }
 
     // Generate new token
-    const newToken = generateToken(owner);
+    const newToken = generateOwnerToken(owner);
 
     res.json({
       success: true,

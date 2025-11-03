@@ -1,4 +1,5 @@
 
+import { memeber } from "./memberTypes";
 // Types
 interface trialInfo {
     totalTrialDays: number;
@@ -21,8 +22,11 @@ export interface GymOwner {
     isPhoneVerified: boolean;
     phoneVerificationCode?: string;
     emailVerificationCode?: string;
-    profileImage?: string;
+    ownerPhoto?: string;
+    registrationUrl?: string;
+    totalMembers: number;
     trialInfo:trialInfo; 
+    recentMembers?: memeber
 }
 
 export interface GymOwnerAuthState {
@@ -54,8 +58,9 @@ export interface LoginCredentials {
 }
 
 export interface ProfileUpdateData {
-    ownerName?: string;
-    phone?: string;
+    ownerName: string;
+    gymName: string;
+    profileImage: string;
     // Add other updatable fields
 }
 

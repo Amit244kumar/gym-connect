@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import gymOwnerAuthReducer from "./gymOwnerAuth/gymOwnerAuthSlice"
 import memberAuthReducer from "./memberAuth/memberAuthSlice"
+import ownerMembershipPlanReducer from './ownerMembershipPlan/ownerMembershipPlanSlice';
 export const store = configureStore({
   reducer: {
     gymOwnerAuth: gymOwnerAuthReducer,
-    memberAuth:memberAuthReducer
+    memberAuth:memberAuthReducer,
+    ownerMembershipPlan:ownerMembershipPlanReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

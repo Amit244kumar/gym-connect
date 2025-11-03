@@ -1,144 +1,134 @@
-// src/components/dashboard/RecentMembersTable.tsx
-import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Eye, MoreHorizontal } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  User,
+} from "lucide-react";
 
-interface Member {
-  id: number;
-  name: string;
-  plan: string;
-  joinDate: string;
-  status: string;
-}
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-interface RecentMembersTableProps {
-  members: Member[];
-}
+import { Member } from "@/type/memberTypes";
+import { formatDate, getFullImageUrl } from "../utils/helper";
+import { getDaysBadge, getPlanBadge, getStatusBadge } from "@/pages/owner/Members";
 
-const RecentMembersTable = ({ members }: RecentMembersTableProps) => {
-  const [sortConfig, setSortConfig] = useState<{key: keyof Member; direction: 'asc' | 'desc'} | null>(null);
 
-  const requestSort = (key: keyof Member) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
-
-  const sortedMembers = [...members];
-  if (sortConfig !== null) {
-    sortedMembers.sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key]) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
-      }
-      if (a[sortConfig.key] > b[sortConfig.key]) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
+const RecentMembersTable = ({ members }) => {
+console.log("recentMembers",members);
+ if (members.length === 0) {
+    return (
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardContent className="p-6">
+          <div className="text-center text-slate-400">
+            No recent members found
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
-
-  const getBadgeVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'default';
-      case 'expired':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  };
-
   return (
     <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-slate-700">
-            <th 
-              className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-300"
-              onClick={() => requestSort('name')}
-            >
-              Name
-            </th>
-            <th 
-              className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-300"
-              onClick={() => requestSort('plan')}
-            >
-              Plan
-            </th>
-            <th 
-              className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-300"
-              onClick={() => requestSort('joinDate')}
-            >
-              Join Date
-            </th>
-            <th className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Status
-            </th>
-            <th className="py-3 px-4 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-700">
-          {sortedMembers.map((member) => (
-            <tr key={member.id} className="hover:bg-slate-700/30">
-              <td className="py-3 px-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center">
-                    <span className="text-xs text-white font-medium">
-                      {member.name.charAt(0)}
-                    </span>
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-sm font-medium text-white">{member.name}</div>
-                  </div>
-                </div>
-              </td>
-              <td className="py-3 px-4 whitespace-nowrap">
-                <div className="text-sm text-slate-300">{member.plan}</div>
-              </td>
-              <td className="py-3 px-4 whitespace-nowrap">
-                <div className="text-sm text-slate-300">{member.joinDate}</div>
-              </td>
-              <td className="py-3 px-4 whitespace-nowrap">
-                <Badge variant={getBadgeVariant(member.status)}>
-                  {member.status}
-                </Badge>
-              </td>
-              <td className="py-3 px-4 whitespace-nowrap text-right text-sm font-medium">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
-                    <DropdownMenuItem className="text-white hover:bg-slate-700 cursor-pointer">
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-white hover:bg-slate-700 cursor-pointer">
-                      Edit Member
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-white hover:bg-slate-700 cursor-pointer">
-                      Renew Membership
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+     <Card className="bg-slate-800/50 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white">All Members</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-slate-700">
+                <TableHead className="text-slate-300"></TableHead>
+                <TableHead className="text-slate-300">Name</TableHead>
+                <TableHead className="text-slate-300">Contact</TableHead>
+                <TableHead className="text-slate-300">Plan</TableHead>
+                <TableHead className="text-slate-300">Status</TableHead>
+                <TableHead className="text-slate-300">Day Left</TableHead>
+                <TableHead className="text-slate-300">Membership Period</TableHead>
+                {/* <TableHead className="text-slate-300 text-right">Actions</TableHead> */}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {members?.length > 0 ? (
+                members.map((member: Member) => (
+                  <TableRow key={member.id} className="border-slate-700 hover:bg-slate-700/50">
+                    <TableCell>
+                      {member?.memberPhoto ? (
+                        <img
+                          src={getFullImageUrl(member.memberPhoto)}
+                          alt="Profile"
+                          className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
+                          crossOrigin="anonymous"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-600">
+                          <User className="h-5 w-5 text-slate-300" />
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium text-white">{member.name}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm text-slate-300">
+                        <div>{member.email}</div>
+                        <div className="text-slate-400">{member.phone}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getPlanBadge(member.membershipType)}</TableCell>
+                    <TableCell>{getStatusBadge(member.membershipStatus)}</TableCell>
+                    <TableCell>{getDaysBadge(member.membershipExpireInDays)}</TableCell>
+                    <TableCell className="text-slate-300">
+                      <div>{formatDate(member.membershipStartDate)}</div>
+                      <div className="text-slate-400">to {formatDate(member.membershipEndDate)}</div>
+                    </TableCell>
+                    {/* <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                              <DropdownMenuItem
+                                onClick={() => handleViewMember(member)}
+                                className="text-white hover:bg-slate-700 cursor-pointer"
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleEditMember(member)}
+                                className="text-white hover:bg-slate-700 cursor-pointer"
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteMember(member)}
+                                className="text-white hover:bg-slate-700 cursor-pointer"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell> */}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-slate-400">
+                    No members found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };

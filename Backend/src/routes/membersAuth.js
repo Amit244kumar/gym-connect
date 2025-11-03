@@ -1,7 +1,7 @@
 import express from 'express';
 import authMiddleware from '../middleware/auth.js';
 
-import { ValidationMemberRegister } from '../validator/memberAuth.js';
+import { validateMemberLogin, ValidationMemberRegister } from '../validator/memberAuth.js';
 import memberController from '../controller/memberAuth.js';
 import {uploadMember} from '../helper/uploadImage.js';
 const router = express.Router();
@@ -17,6 +17,11 @@ router.get('/getMembers',
     authMiddleware,
     memberController.getAllMembers
 );
+
+router.post('/loginMember',
+    validateMemberLogin,
+    memberController.memberLogin
+)
 // router.get('/', protect, authorize('owner'), async (req, res) => {
 //   try {
 //     const page = parseInt(req.query.page) || 1;

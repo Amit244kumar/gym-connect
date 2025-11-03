@@ -1,4 +1,5 @@
 import { config } from "@/axios/config";
+import { BadgeProps } from "../ui/badge";
 
 
 export const getFullImageUrl=(url:string)=>{

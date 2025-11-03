@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto"; // Make sure to import crypto
 // import logger from "../utils/logger.js";
 import { sendMemberWelcomeEmail } from '../helper/emailHelper.js';
+import { generateMemberToken } from '../utils/helper.js';
 import { Op } from 'sequelize';
 
 const registerMember = async (req, res) => {
@@ -46,9 +47,9 @@ const registerMember = async (req, res) => {
     });
     
     if (existingUserWithEmail) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
-        error: "User with this email already exists",
+        message: "User with this email already exists",
       });
     }
 
@@ -210,7 +211,17 @@ const getAllMembers = async (req, res) => {
     console.log("membersdddd",members)
     // Calculate pagination metadata
     const totalPages = Math.ceil(count / limit);
-    
+    members.forEach(member => {
+      if(member.membershipEndDate){
+        const endDate = new Date(member.membershipEndDate);
+        const today = new Date();
+        
+        const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+        console.log("dayssdfLeft",daysLeft)
+        member.dataValues.membershipExpireInDays=daysLeft;  
+      }
+      console.log("membesdsdr",member)
+    });
     // Send response
     res.status(200).json({
       success: true,
@@ -237,4 +248,44 @@ const getAllMembers = async (req, res) => {
   }
 };
 
-export default { registerMember,getAllMembers };
+const memberLogin= async (req,res)=>{
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: "Validation failed",
+        details: errors.array(),
+      });
+    }
+    const {email,password}=req.body
+    const isExist=await Member.findOne({
+      where:{email}})
+    if(!isExist){
+      return res.status(404).json({
+        success:false,
+        message:"Email not found"
+      })
+    }
+    const isPasswordValid=await isExist.comparePassword(password)
+    if(!isPasswordValid){
+        return res.status(404).json({
+        success:false,
+        message:"Password is not valid"
+      })
+    }
+    const token=generateMemberToken(isExist)
+    return res.status(201).json({
+      success:true,
+      message:"login successfully",
+      data:token
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: "Server error while fetching members",
+      details: error.message,
+    });
+  }
+}
+export default { registerMember,getAllMembers,memberLogin };

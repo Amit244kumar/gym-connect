@@ -91,15 +91,16 @@ const validateGymOwnerProfileUpdate = [
     .matches(/^[a-zA-Z\s]+$/)
     .withMessage('Owner name can only contain letters and spaces'),
 
-  body('phone')
-    .optional()
+  body('gymName')
     .trim()
-    .matches(/^[0-9+\-\s()]{10,15}$/)
-    .withMessage('Please enter a valid phone number (10-15 digits)')
-    .isLength({ min: 10, max: 15 })
-    .withMessage('Phone number must be between 10 and 15 characters'),
+    .notEmpty()
+    .withMessage('Gym name is required')
+    .isLength({ min: 2, max: 120 })
+    .withMessage('Gym name must be between 2 and 120 characters')
+    .matches(/^[a-zA-Z0-9\s\-&.()]+$/)
+    .withMessage('Gym name can only contain letters, numbers, spaces, hyphens, ampersands, dots, and parentheses'),
 
-  body('ownerPhoto')
+  body('profileImage')
     .optional()
     .isURL()
     .withMessage('Owner photo must be a valid URL')
@@ -193,6 +194,7 @@ const validateResendVerificationCode = [
     .matches(/^[0-9+\-\s()]{10,15}$/)
     .withMessage('Please enter a valid phone number (10-15 digits)'),
 ];
+
 
 // Forgot Password Validation
 const validateForgotPassword = [

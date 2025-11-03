@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@/axios/index";
-import { memberData, MemberQueryParams } from "@/type/memberTypes";
+import {  memberData, memberlogin, MemberQueryParams } from "@/type/memberTypes";
 import { ThunkApiConfig } from "@/type/gymOwnerTypes";
 import { toast } from "sonner";
 
@@ -9,7 +9,7 @@ export const addMemberFeth=createAsyncThunk<any,memberData,ThunkApiConfig>(
     async(memberData:memberData,{rejectWithValue})=>{
         try {
             const response=await api.memberAuth.addMember(memberData)
-            console.log("resdf",response)
+            console.log("redsdsdf",response.data)
             if(response.success){
                 toast.success(response.message)
                 return response;
@@ -23,6 +23,45 @@ export const addMemberFeth=createAsyncThunk<any,memberData,ThunkApiConfig>(
         }
     }
 )
+export const loginMemberFeth=createAsyncThunk<any,memberlogin,ThunkApiConfig>(
+    "loginMemberFeth/loginMember",
+    async(memberData:memberlogin, {rejectWithValue})=>{
+        try {
+            const response=await api.memberAuth.loginMember(memberData)
+            console.log("resdf",response)
+            if(response.success){
+                toast.success(response.message)
+                return response;
+            }else{
+                toast.error(response.response?.data?.message)
+                return rejectWithValue(response.data.message);
+            }
+        }catch(error){
+            const errorMessage = error.response?.data?.message || error.message;
+            return rejectWithValue(errorMessage);
+        }
+    }
+)
+
+
+// export const getMemberByIdFeth=createAsyncThunk<any,string,ThunkApiConfig>(
+//     "getMemberByIdFeth/getMemberById",
+//     async(memberId:string, {rejectWithValue})=>{
+//         try {
+//             const response=await api.memberAuth.getMemberById(memberId)
+//             console.log("resdf",response)
+//             if(response.success){
+//                 return response;
+//             }else{
+//               toast.error(response.response?.data?.message)
+//               return rejectWithValue(response.data.message);
+//             }
+//         } catch (error) {
+//             const errorMessage = error.response?.data?.message || error.message;
+//             return rejectWithValue(errorMessage);
+//         }
+//     }
+// )
 
 export const getAllMembersFeth=createAsyncThunk<any,MemberQueryParams,ThunkApiConfig>(
     "getAllMembersFeth/getAllMembers",

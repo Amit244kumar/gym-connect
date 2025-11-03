@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import {config} from '../config.js';
 // Generate JWT token
-export const generateToken = (owner) => {
+export const generateOwnerToken = (owner) => {
   return jwt.sign(
     { 
       id: owner.id, 
@@ -13,6 +13,13 @@ export const generateToken = (owner) => {
     config.JWT_SECRET,
   );
 };
+
+export const generateMemberToken=(member)=>{
+  return jwt.sign({
+    id:member.id,
+    email:member.email
+  },config.JWT_SECRET)
+}
 
 // Generate email verification token
 export const generateEmailVerificationToken = () => {

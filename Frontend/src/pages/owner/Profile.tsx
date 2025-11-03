@@ -26,11 +26,39 @@ import {
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/index";
-import { getProfilefeth } from "@/store/gymOwnerAuth/gymOwnerAuthThunks"; //updateProfileFeth
+import { getProfilefeth, updateGymOwnerProfileFeth } from "@/store/gymOwnerAuth/gymOwnerAuthThunks";
 import { AppDispatch } from "@/store/index";
 import { toast } from "sonner";
 import { getFullImageUrl } from "@/components/utils/helper";
 import PhoneVerificationModal from "../../components/modals/PhoneVerificationModal";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+
+// Define validation schema
+const profileSchema = yup.object().shape({
+  ownerName: yup.string().required('Full name is required'),
+  email: yup.string().email('Invalid email address'),
+  phone: yup.string(),
+  gymName: yup.string().required('Gym name is required'),
+  profileImage: yup.mixed()
+    .test('fileSize', 'Image size must be less than 5MB', (value) => {
+      if (!value) return true;
+      return value.size <= 5 * 1024 * 1024; // 5MB
+    })
+    .test('fileType', 'Only JPG, PNG or GIF images are allowed', (value) => {
+      if (!value) return true;
+      return ['image/jpeg', 'image/png', 'image/gif'].includes(value.type);
+    })
+});
+
+type ProfileFormData = {
+  ownerName: string;
+  email: string;
+  phone: string;
+  gymName: string;
+  profileImage: File | null;
+};
 
 const Profile = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,39 +69,39 @@ const Profile = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [formData, setFormData] = useState({
-    ownerName: "",
-    email: "",
-    phone: "",
-    gymName: "",
-    profileImage: null as File | null,
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<ProfileFormData>({
+    resolver: yupResolver(profileSchema),
+    defaultValues: {
+      ownerName: "",
+      email: "",
+      phone: "",
+      gymName: "",
+      profileImage: null,
+    }
   });
-
+  console.log("sfasfds",owner)
   useEffect(() => {
     if (owner) {
-      setFormData({
+      const formData = {
         ownerName: owner.ownerName || "",
         email: owner.email || "",
         phone: owner.phone || "",
         gymName: owner.gymName || "",
-        profileImage: null,
-      });
+        profileImage: "",
+      };
       
-      if (owner.profileImage) {
-        setPreviewImage(owner.profileImage);
+      reset(formData);
+      
+      if (owner.ownerPhoto) {
+        setPreviewImage(getFullImageUrl(owner.ownerPhoto));
       }
     }
-  }, [owner]);
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  }, [owner, reset]);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setFormData(prev => ({ ...prev, profileImage: file }));
+      setValue('profileImage', file);
       
       // Create preview URL
       const reader = new FileReader();
@@ -85,33 +113,29 @@ const Profile = () => {
   };
 
   const handleRemoveImage = () => {
-    setFormData(prev => ({ ...prev, profileImage: null }));
+    setValue('profileImage', null);
     setPreviewImage(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: ProfileFormData) => {
     setIsSaving(true);
     
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append('ownerName', formData.ownerName);
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('phone', formData.phone);
-      formDataToSend.append('gymName', formData.gymName);
+      formDataToSend.append('ownerName', data.ownerName);
+      formDataToSend.append('gymName', data.gymName);
       
-      if (formData.profileImage) {
-        formDataToSend.append('profileImage', formData.profileImage);
+      if (data.profileImage) {
+        formDataToSend.append('profileImage', data.profileImage);
       }
       
-    //   await dispatch(updateProfileFeth(formDataToSend)).unwrap();
-      toast.success("Profile updated successfully");
+      await dispatch(updateGymOwnerProfileFeth(formDataToSend)).unwrap(); 
       setIsEditing(false);
     } catch (error) {
-      toast.error("Failed to update profile");
+      console.error("Failed to update profile:", error);
     } finally {
       setIsSaving(false);
     }
@@ -119,16 +143,18 @@ const Profile = () => {
 
   const handleCancel = () => {
     if (owner) {
-      setFormData({
+      const formData = {
         ownerName: owner.ownerName || "",
         email: owner.email || "",
         phone: owner.phone || "",
         gymName: owner.gymName || "",
         profileImage: null,
-      });
+      };
+      
+      reset(formData);
       
       if (owner.profileImage) {
-        setPreviewImage(owner.profileImage);
+        setPreviewImage(getFullImageUrl(owner.profileImage));
       } else {
         setPreviewImage(null);
       }
@@ -165,23 +191,7 @@ const Profile = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Profile</h1>
-          {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)} className="bg-orange-500 hover:bg-orange-600">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
-          ) : (
-            <div className="flex space-x-2">
-              <Button variant="outline" onClick={handleCancel}>
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-              <Button onClick={handleSubmit} disabled={isSaving}>
-                <Save className="h-4 w-4 mr-2" />
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-          )}
+          
         </div>
 
         <Tabs defaultValue="general" className="space-y-6">
@@ -202,7 +212,7 @@ const Profile = () => {
                   <div className="relative">
                     {previewImage ? (
                       <img 
-                        src={getFullImageUrl(previewImage)} 
+                        src={previewImage} 
                         alt="Profile" 
                         className="w-32 h-32 rounded-full object-cover border-4 border-slate-600"
                         crossOrigin="anonymous"
@@ -247,6 +257,9 @@ const Profile = () => {
                   <p className="text-xs text-slate-400 text-center">
                     JPG, PNG or GIF. Max size of 5MB.
                   </p>
+                  {errors.profileImage && (
+                    <p className="text-xs text-red-400">{errors.profileImage.message}</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -256,7 +269,7 @@ const Profile = () => {
                   <CardTitle className="text-white">General Information</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="ownerName" className="text-slate-300">Full Name</Label>
@@ -264,13 +277,14 @@ const Profile = () => {
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                           <Input
                             id="ownerName"
-                            name="ownerName"
-                            value={formData.ownerName}
-                            onChange={handleInputChange}
+                            {...register('ownerName')}
                             disabled={!isEditing}
                             className="bg-slate-700/50 border-slate-600 text-white pl-10"
                           />
                         </div>
+                        {errors.ownerName && (
+                          <p className="text-xs text-red-400">{errors.ownerName.message}</p>
+                        )}
                       </div>
                       
                       <div className="space-y-2">
@@ -279,14 +293,14 @@ const Profile = () => {
                           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                           <Input
                             id="email"
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
+                            {...register('email')}
+                            disabled
                             className="bg-slate-700/50 border-slate-600 text-white pl-10"
                           />
                         </div>
+                        {errors.email && (
+                          <p className="text-xs text-red-400">{errors.email.message}</p>
+                        )}
                         {owner?.isEmailVerified && (
                           <div className="flex items-center mt-1">
                             <Check className="h-3 w-3 text-green-400 mr-1" />
@@ -301,11 +315,8 @@ const Profile = () => {
                           <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                           <Input
                             id="phone"
-                            name="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
+                            {...register('phone')}
+                            disabled
                             className="bg-slate-700/50 border-slate-600 text-white pl-10"
                           />
                         </div>
@@ -336,17 +347,37 @@ const Profile = () => {
                           <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                           <Input
                             id="gymName"
-                            name="gymName"
-                            value={formData.gymName}
-                            onChange={handleInputChange}
+                            {...register('gymName')}
                             disabled={!isEditing}
                             className="bg-slate-700/50 border-slate-600 text-white pl-10"
                           />
                         </div>
+                        {errors.gymName && (
+                          <p className="text-xs text-red-400">{errors.gymName.message}</p>
+                        )}
                       </div>
                     </div>
                   </form>
                 </CardContent>
+                <div className="flex justify-end p-4 pt-0">
+                  {!isEditing ? (
+                  <Button onClick={() => setIsEditing(true)} className="bg-orange-500 hover:bg-orange-600">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                ) : (
+                  <div className="flex space-x-2">
+                    <Button variant="outline" onClick={handleCancel}>
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSubmit(onSubmit)} disabled={isSaving}>
+                      <Save className="h-4 w-4 mr-2" />
+                      {isSaving ? 'updating...' : 'Update Profile'}
+                    </Button>
+                  </div>
+                )}
+                </div>
               </Card>
             </div>
           </TabsContent>
@@ -422,13 +453,6 @@ const Profile = () => {
                       <span className="text-white">{formatDate(owner.trialEnd)}</span>
                     </div>
                   )}
-                  
-                  {/* {owner?.createdAt && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Member Since</span>
-                      <span className="text-white">{formatDate(owner.createdAt)}</span>
-                    </div>
-                  )} */}
                 </CardContent>
               </Card>
             </div>
@@ -524,6 +548,14 @@ const Profile = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {showPhoneVerification && (
+          <PhoneVerificationModal 
+            isOpen={showPhoneVerification} 
+            onClose={() => setShowPhoneVerification(false)} 
+            phoneNumber={owner?.phone || ''}
+          />
+        )}
       </div>
   );
 };

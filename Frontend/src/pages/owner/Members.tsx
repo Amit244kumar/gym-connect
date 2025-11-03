@@ -19,12 +19,16 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  Settings,
+  EyeOff,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -35,15 +39,55 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { useSelector,useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/index";
 import { getAllMembersFeth } from "@/store/memberAuth/memberAuthThunk";
-import {  Member, MemberQueryParams } from "@/type/memberTypes";
+import { Member, MemberQueryParams } from "@/type/memberTypes";
 import { formatDate, getFullImageUrl } from "@/components/utils/helper";
 import Shimmer from "@/components/ui/Shimmer";
 
+// Helper functions for badges
+export const getStatusBadge = (status: string) => {
+  switch (status) {
+    case "active":
+      return <Badge className="bg-green-500/20 text-green-400">Active</Badge>;
+    case "expired":
+      return <Badge className="bg-red-500/20 text-red-400">Expired</Badge>;
+    case "cancelled":
+      return <Badge className="bg-yellow-500/20 text-yellow-400">Cancelled</Badge>;
+    default:
+      return <Badge className="bg-gray-500/20 text-gray-400">Unknown</Badge>;
+  }
+};
 
+export const getPlanBadge = (plan: string) => {
+  switch (plan) {
+    case "basic":
+      return <Badge className="bg-blue-500/20 text-blue-400">Basic</Badge>;
+    case "standard":
+      return <Badge className="bg-purple-500/20 text-purple-400">Standard</Badge>;
+    case "premium":
+      return <Badge className="bg-pink-500/20 text-pink-400">Premium</Badge>;
+    case "annual":
+      return <Badge className="bg-indigo-500/20 text-indigo-400">Annual</Badge>;
+    default:
+      return <Badge className="bg-gray-500/20 text-gray-400">Unknown</Badge>;
+  }
+};
 
+export const getDaysBadge = (daysLeft: number) => {
+  if (daysLeft <= 30) {
+    return <Badge className="bg-red-500/20 text-red-400">{daysLeft}</Badge>;
+  } else {
+    return <Badge className="bg-green-500/20 text-green-400">{daysLeft}</Badge>;
+  }
+};
+
+// Helper to truncate text
+const truncateText = (text: string, maxLength: number = 30) => {
+  if (!text) return "";
+  return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+};
 
 interface FilterOptions {
   membershipType?: string;
@@ -51,11 +95,33 @@ interface FilterOptions {
   gender?: string;
 }
 
+// Define available columns
+const AVAILABLE_COLUMNS = [
+  { id: "photo", label: "Photo", mandatory: true },
+  { id: "name", label: "Name", mandatory: true },
+  { id: "contact", label: "Contact", mandatory: true },
+  { id: "plan", label: "Plan", mandatory: true },
+  { id: "status", label: "Status", mandatory: true },
+  { id: "daysLeft", label: "Days Left", mandatory: true },
+  { id: "membershipPeriod", label: "Membership Period", mandatory: false },
+  { id: "address", label: "Address", mandatory: false },
+  { id: "gender", label: "Gender", mandatory: false },
+  { id: "dateOfBirth", label: "Date of Birth", mandatory: false },
+  { id: "actions", label: "Actions", mandatory: true },
+];
+
 const Members = () => {
-  const {isLoading,memberData:members,isAdded}=useSelector((state:RootState)=>state.memberAuth)
-  console.log("memberData",members)
-  const [searchTerm, setSearchTerm] = useState("");
+  const { isLoading, memberData: members, isAdded } = useSelector((state: RootState) => state.memberAuth);
+  console.log("memberData", members);
   const dispatch = useDispatch<AppDispatch>();
+  
+  // State for column visibility
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    AVAILABLE_COLUMNS
+      .filter(col => col.mandatory)
+      .map(col => col.id)
+  );
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
@@ -65,52 +131,54 @@ const Members = () => {
   // Filter state
   const [filters, setFilters] = useState<FilterOptions>({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch members from API
   const fetchMembers = async (page: number, limit: number, search: string, filters: FilterOptions) => {
-  try {
-    // Create a MemberQueryParams object instead of URLSearchParams
-    const params: MemberQueryParams = {
-      page,
-      limit,
-    };
-    
-    if (search) {
-      params.search = search;
+    try {
+      // Create a MemberQueryParams object instead of URLSearchParams
+      const params: MemberQueryParams = {
+        page,
+        limit,
+      };
+      
+      if (search) {
+        params.search = search;
+      }
+      
+      if (filters.membershipType) {
+        params.membershipType = filters.membershipType;
+      }
+      
+      if (filters.membershipStatus) {
+        params.membershipStatus = filters.membershipStatus;
+      }
+      
+      if (filters.gender) {
+        params.gender = filters.gender;
+      }
+      
+      console.log("params", params);
+      
+      // Call the API with the correct parameter type
+      const res = await dispatch(getAllMembersFeth(params)).unwrap();
+      console.log("rddes", res);
+      
+      if (res.success) {
+        setTotalMembers(res?.data?.pagination?.totalItems);
+        setCurrentPage(res?.data?.pagination?.currentPage);
+        setTotalPages(res?.data.pagination?.totalPages);
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      toast.error('Failed to load members');
     }
-    
-    if (filters.membershipType) {
-      params.membershipType = filters.membershipType;
-    }
-    
-    if (filters.membershipStatus) {
-      params.membershipStatus = filters.membershipStatus;
-    }
-    
-    if (filters.gender) {
-      params.gender = filters.gender;
-    }
-    
-    console.log("params", params);
-    
-    // Call the API with the correct parameter type
-    const res =  await dispatch(getAllMembersFeth(params)).unwrap();
-    console.log("rddes", res);
-    
-    if (res.success) {
-      setTotalMembers(res?.data?.pagination?.totalItems);
-      setCurrentPage(res?.data?.pagination?.currentPage);
-      setTotalPages(res?.data.pagination?.totalPages);
-    }
-  } catch (error) {
-    console.error('Error fetching members:', error);
-    toast.error('Failed to load members');
-  }
-};
+  };
 
   useEffect(() => {
     fetchMembers(currentPage, membersPerPage, searchTerm, filters);
-  }, [currentPage, membersPerPage, searchTerm, filters,isAdded]);
+  }, [currentPage, membersPerPage, searchTerm, filters, isAdded]);
 
   const handleViewMember = (member: Member) => {
     // In a real app, navigate to view page
@@ -166,33 +234,24 @@ const Members = () => {
     setCurrentPage(1);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-500/20 text-green-400">Active</Badge>;
-      case "expired":
-        return <Badge className="bg-red-500/20 text-red-400">Expired</Badge>;
-      case "cancelled":
-        return <Badge className="bg-yellow-500/20 text-yellow-400">Cancelled</Badge>;
-      default:
-        return <Badge className="bg-gray-500/20 text-gray-400">Unknown</Badge>;
+  const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
+    if (isVisible) {
+      setVisibleColumns(prev => [...prev, columnId]);
+    } else {
+      setVisibleColumns(prev => prev.filter(id => id !== columnId));
     }
   };
 
-  const getPlanBadge = (plan: string) => {
-    switch (plan) {
-      case "basic":
-        return <Badge className="bg-blue-500/20 text-blue-400">Basic</Badge>;
-      case "standard":
-        return <Badge className="bg-purple-500/20 text-purple-400">Standard</Badge>;
-      case "premium":
-        return <Badge className="bg-pink-500/20 text-pink-400">Premium</Badge>;
-      case "annual":
-        return <Badge className="bg-indigo-500/20 text-indigo-400">Annual</Badge>;
-      default:
-        return <Badge className="bg-gray-500/20 text-gray-400">Unknown</Badge>;
-    }
+  const resetColumnVisibility = () => {
+    setVisibleColumns(
+      AVAILABLE_COLUMNS
+        .filter(col => col.mandatory)
+        .map(col => col.id)
+    );
   };
+
+  // Check if a column is visible
+  const isColumnVisible = (columnId: string) => visibleColumns.includes(columnId);
 
   return (
     <div className="space-y-6">
@@ -201,7 +260,6 @@ const Members = () => {
           <h1 className="text-2xl font-bold text-white">Members</h1>
           <p className="text-slate-400">Manage your gym members and their subscriptions</p>
         </div>
-        
       </div>
 
       {/* Stats Cards */}
@@ -209,19 +267,19 @@ const Members = () => {
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">
-              {isLoading?<Shimmer width="120px" height="16px" />:"Total Members"}
+              {isLoading ? <Shimmer width="120px" height="16px" /> : "Total Members"}
             </CardTitle>
             <Users className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-           {isLoading?
-            <Shimmer width="120px" height="16px" />
-            :
-            <> 
-              <div className="text-2xl font-bold text-white">{totalMembers}</div>
-              <p className="text-xs text-slate-400">+12% from last month</p>
-            </>
-           }
+            {isLoading ?
+              <Shimmer width="120px" height="16px" />
+              :
+              <>
+                <div className="text-2xl font-bold text-white">{totalMembers}</div>
+                <p className="text-xs text-slate-400">+12% from last month</p>
+              </>
+            }
           </CardContent>
         </Card>
         <Card className="bg-slate-800/50 border-slate-700">
@@ -283,7 +341,7 @@ const Members = () => {
             </div>
             <DropdownMenu open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <DropdownMenuTrigger asChild>
-                <Button  className="border-slate-600 text-slate-300 hover:bg-slate-700/50">
+                <Button className="border-slate-600 text-slate-300 hover:bg-slate-700/50">
                   <Filter className="h-4 w-4 mr-2" />
                   Filter
                 </Button>
@@ -292,7 +350,7 @@ const Members = () => {
                 <div className="p-2">
                   <div className="mb-3">
                     <label className="text-sm text-slate-300 mb-1 block">Membership Type</label>
-                    <select 
+                    <select
                       className="w-full bg-slate-700 border border-slate-600 rounded text-white p-1 text-sm"
                       value={filters.membershipType || 'all'}
                       onChange={(e) => handleFilterChange('membershipType', e.target.value)}
@@ -306,7 +364,7 @@ const Members = () => {
                   </div>
                   <div className="mb-3">
                     <label className="text-sm text-slate-300 mb-1 block">Status</label>
-                    <select 
+                    <select
                       className="w-full bg-slate-700 border border-slate-600 rounded text-white p-1 text-sm"
                       value={filters.membershipStatus || 'all'}
                       onChange={(e) => handleFilterChange('membershipStatus', e.target.value)}
@@ -319,7 +377,7 @@ const Members = () => {
                   </div>
                   <div className="mb-3">
                     <label className="text-sm text-slate-300 mb-1 block">Gender</label>
-                    <select 
+                    <select
                       className="w-full bg-slate-700 border border-slate-600 rounded text-white p-1 text-sm"
                       value={filters.gender || 'all'}
                       onChange={(e) => handleFilterChange('gender', e.target.value)}
@@ -330,8 +388,8 @@ const Members = () => {
                       <option value="other">Other</option>
                     </select>
                   </div>
-                  <Button 
-                    onClick={clearFilters} 
+                  <Button
+                    onClick={clearFilters}
                     size="sm"
                     className="w-full border-slate-600 text-slate-300 hover:bg-slate-700/50"
                   >
@@ -346,8 +404,41 @@ const Members = () => {
 
       {/* Members Table */}
       <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white">All Members</CardTitle>
+          <DropdownMenu open={isColumnSelectorOpen} onOpenChange={setIsColumnSelectorOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button className="border-slate-600  hover:bg-slate-700/50">
+                <Settings className="h-4 w-4 mr-2" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700 w-56">
+              <div className="p-2 max-h-80 overflow-y-auto">
+                {AVAILABLE_COLUMNS.map((column) => (
+                  <div key={column.id} className="flex items-center space-x-2 py-1">
+                    <DropdownMenuCheckboxItem
+                      checked={isColumnVisible(column.id)}
+                      onCheckedChange={(checked) => handleColumnVisibilityChange(column.id, checked as boolean)}
+                      disabled={column.mandatory}
+                      className="text-white"
+                    >
+                      {column.label}
+                      {column.mandatory && <span className="ml-1 text-xs text-orange-400">(required)</span>}
+                    </DropdownMenuCheckboxItem>
+                  </div>
+                ))}
+                <DropdownMenuSeparator />
+                <Button
+                  onClick={resetColumnVisibility}
+                  size="sm"
+                  className="w-full border-slate-600 text-slate-300 hover:bg-slate-700/50 mt-2"
+                >
+                  Reset to Default
+                </Button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -359,85 +450,140 @@ const Members = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-slate-700">
-                    <TableHead className="text-slate-300"></TableHead>
-                    <TableHead className="text-slate-300">Name</TableHead>
-                    <TableHead className="text-slate-300">Contact</TableHead>
-                    <TableHead className="text-slate-300">Plan</TableHead>
-                    <TableHead className="text-slate-300">Status</TableHead>
-                    <TableHead className="text-slate-300">Membership Period</TableHead>
-                    <TableHead className="text-slate-300 text-right">Actions</TableHead>
+                    {AVAILABLE_COLUMNS.map((column) => (
+                      isColumnVisible(column.id) && (
+                        <TableHead key={column.id} className="text-slate-300">
+                          {column.label}
+                        </TableHead>
+                      )
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {members?.length > 0 ? (
-                    members.map((member:Member) => (
+                    members.map((member: Member) => (
                       <TableRow key={member.id} className="border-slate-700 hover:bg-slate-700/50">
-                        <TableCell>
-                          {member?.memberPhoto ? (
-                            <img
-                              src={getFullImageUrl(member.memberPhoto)}
-                              alt="Profile"
-                              className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
-                              crossOrigin="anonymous"
+                        {/* Photo Column */}
+                        {isColumnVisible('photo') && (
+                          <TableCell>
+                            {member?.memberPhoto ? (
+                              <img
+                                src={getFullImageUrl(member.memberPhoto)}
+                                alt="Profile"
+                                className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
+                                crossOrigin="anonymous"
                               />
                             ) : (
                               <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-600">
                                 <User className="h-5 w-5 text-slate-300" />
                               </div>
                             )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-white">{member.name}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm text-slate-300">
-                            <div>{member.email}</div>
-                            <div className="text-slate-400">{member.phone}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getPlanBadge(member.membershipType)}</TableCell>
-                        <TableCell>{getStatusBadge(member.membershipStatus)}</TableCell>
-                        <TableCell className="text-slate-300">
-                          <div>{formatDate(member.membershipStartDate)}</div>
-                          <div className="text-slate-400">to {formatDate(member.membershipEndDate)}</div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
-                              <DropdownMenuItem
-                                onClick={() => handleViewMember(member)}
-                                className="text-white hover:bg-slate-700 cursor-pointer"
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                View
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleEditMember(member)}
-                                className="text-white hover:bg-slate-700 cursor-pointer"
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteMember(member)}
-                                className="text-white hover:bg-slate-700 cursor-pointer"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+                          </TableCell>
+                        )}
+                        
+                        {/* Name Column */}
+                        {isColumnVisible('name') && (
+                          <TableCell>
+                            <div className="font-medium text-white">{member.name}</div>
+                          </TableCell>
+                        )}
+                        
+                        {/* Contact Column */}
+                        {isColumnVisible('contact') && (
+                          <TableCell>
+                            <div className="text-sm text-slate-300">
+                              <div>{member.email}</div>
+                              <div className="text-slate-400">{member.phone}</div>
+                            </div>
+                          </TableCell>
+                        )}
+                        
+                        {/* Plan Column */}
+                        {isColumnVisible('plan') && (
+                          <TableCell>{getPlanBadge(member.membershipType)}</TableCell>
+                        )}
+                        
+                        {/* Status Column */}
+                        {isColumnVisible('status') && (
+                          <TableCell>{getStatusBadge(member.membershipStatus)}</TableCell>
+                        )}
+                        
+                        {/* Days Left Column */}
+                        {isColumnVisible('daysLeft') && (
+                          <TableCell>{getDaysBadge(member.membershipExpireInDays)}</TableCell>
+                        )}
+                        
+                        {/* Membership Period Column */}
+                        {isColumnVisible('membershipPeriod') && (
+                          <TableCell className="text-slate-300">
+                            <div>{formatDate(member.membershipStartDate)}</div>
+                            <div className="text-slate-400">to {formatDate(member.membershipEndDate)}</div>
+                          </TableCell>
+                        )}
+                        
+                        {/* Address Column */}
+                        {isColumnVisible('address') && (
+                          <TableCell className="text-slate-300">
+                            <div title={member.address}>
+                              {truncateText(member.address)}
+                            </div>
+                          </TableCell>
+                        )}
+                        
+                        {/* Gender Column */}
+                        {isColumnVisible('gender') && (
+                          <TableCell className="text-slate-300 capitalize">
+                            {member.gender}
+                          </TableCell>
+                        )}
+                        
+                        {/* Date of Birth Column */}
+                        {isColumnVisible('dateOfBirth') && (
+                          <TableCell className="text-slate-300">
+                            {formatDate(member.dateOfBirth)}
+                          </TableCell>
+                        )}
+                        
+                        {/* Actions Column */}
+                        {isColumnVisible('actions') && (
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                                <DropdownMenuItem
+                                  onClick={() => handleViewMember(member)}
+                                  className="text-white hover:bg-slate-700 cursor-pointer"
+                                >
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleEditMember(member)}
+                                  className="text-white hover:bg-slate-700 cursor-pointer"
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteMember(member)}
+                                  className="text-white hover:bg-slate-700 cursor-pointer"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-slate-400">
+                      <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-slate-400">
                         No members found
                       </TableCell>
                     </TableRow>
@@ -446,8 +592,8 @@ const Members = () => {
               </Table>
               
               {/* Pagination */}
-              {totalPages  && (
-                <div className="flex items-center justify-between  flex-wrap   mt-4">
+              {totalPages && (
+                <div className="flex items-center justify-between flex-wrap mt-4">
                   <div className="text-sm text-slate-300">
                     Showing {(currentPage - 1) * membersPerPage + 1} to{" "}
                     {Math.min(currentPage * membersPerPage, totalMembers)} of {totalMembers} members
@@ -458,7 +604,7 @@ const Members = () => {
                       size="sm"
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="border-slate-600 "
+                      className="border-slate-600"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -482,10 +628,9 @@ const Members = () => {
                             size="sm"
                             onClick={() => handlePageChange(pageNum)}
                             className={`
-                              
                               ${currentPage === pageNum
                                 ? "bg-orange-500 hover:bg-orange-600"
-                                : "border-slate-600 "
+                                : "border-slate-600"
                               }`}
                           >
                             {pageNum}
