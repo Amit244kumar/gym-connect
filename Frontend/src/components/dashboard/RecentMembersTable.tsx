@@ -77,7 +77,7 @@ console.log("recentMembers",members);
                         <div className="text-slate-400">{member.phone}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{getPlanBadge(member.membershipType)}</TableCell>
+                    <TableCell>{getPlanBadge(member?.OwnerMembershipPlan?.planName)}</TableCell>
                     <TableCell>{getStatusBadge(member.membershipStatus)}</TableCell>
                     <TableCell>{getDaysBadge(member.membershipExpireInDays)}</TableCell>
                     <TableCell className="text-slate-300">

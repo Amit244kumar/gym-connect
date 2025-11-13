@@ -1,4 +1,4 @@
-import { GymOwner, Member } from '../models/index.js';
+import { GymOwner, Member, OwnerMembershipPlan } from '../models/index.js';
 import { validationResult } from 'express-validator';
 import {  generateEmailVerificationToken, generatePhoneVerificationOTP, generateOwnerToken } from '../utils/helper.js';
 import { sendEmailVerification, sendPasswordResetEmail } from '../helper/emailHelper.js';
@@ -259,8 +259,26 @@ export const getProfile = async (req, res) => {
       where: { ownerId },
       attributes: { exclude: ['password','resetpasswordToken','resetpasswordExpires'] },
       order: [['createdAt', 'DESC']],
-      limit: 5
+      limit: 5,
+      include:{
+        model:OwnerMembershipPlan,
+        attributes:["planName"]
+      }
     });
+    console.log("sdfsdd",recentMembers)
+     recentMembers.forEach(member => {
+      if(member.membershipEndDate){
+        const endDate = new Date(member.membershipEndDate);
+        const today = new Date();
+    console.log("sdfqwaqsdd",member)
+        
+        const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+        console.log("dayssdfLeft",daysLeft)
+        member.dataValues.membershipExpireInDays=daysLeft;  
+      }
+      console.log("membesdsdr",member)
+    });
+
     console.log("Members Count",members)
     // Calculate trial days information
     const trialStart = new Date(owner.trialStart);
@@ -285,7 +303,6 @@ export const getProfile = async (req, res) => {
           trialStatus: today <= trialEnd ? 'active' : 'expired',
           isTrialActive: today <= trialEnd
         },
-        totalMembers:members,
         recentMembers
       }
     });

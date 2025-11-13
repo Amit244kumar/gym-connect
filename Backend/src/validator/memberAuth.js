@@ -4,7 +4,7 @@ const ValidationMemberRegister = [
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
   body('phone').matches(/^[0-9]{10}$/).withMessage('Please provide a valid 10-digit phone number'),
   body('address').trim().isLength({ min: 5 }).withMessage('Address must be at least 5 characters'),
-  body('plan').isIn(['basic', 'standard', 'premium', 'annual']).withMessage('Please select a valid membership plan'),
+  body('plan').isNumeric(),
   body('startDate').isISO8601().withMessage('Invalid date format for start date'),
   body('profileImage').optional().custom((value, { req }) => {
     if (!value) return true; // If no file is provided, skip validation

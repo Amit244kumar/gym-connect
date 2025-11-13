@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addMemberFeth } from "@/store/memberAuth/memberAuthThunk";
+import { getMembershipPlansfeth } from "@/store/ownerMembershipPlan/ownerMembershipPlanThunk";
 import {
   Select,
   SelectContent,
@@ -57,12 +58,12 @@ const validationSchema = yup.object().shape({
     .required("Please select a membership plan"),
   startDate: yup.string()
     .required("Start date is required")
-    .test("is-future-date", "Start date must be today or later", function(value) {
+    .test("is-future-date", "Start date must be today or before", function(value) {
       if (!value) return false;
       const selectedDate = new Date(value);
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Reset time part
-      return selectedDate >= today;
+      today.setHours(23, 59, 59, 59); // Reset time part
+      return selectedDate <= today;
     }),
   profileImage: yup.mixed()
     .optional()
@@ -92,6 +93,7 @@ interface memberData {
 function AddMemberModal({ onClose }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const { isLoading, memberData } = useSelector((state: RootState) => state.memberAuth);
+  const { plans, isLoading: plansLoading } = useSelector((state: RootState) => state.ownerMembershipPlan);
   const dispatch = useDispatch<AppDispatch>();
   
   const {
@@ -116,6 +118,19 @@ function AddMemberModal({ onClose }) {
     }
   });
 
+  // Fetch membership plans when component mounts
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        await dispatch(getMembershipPlansfeth()).unwrap();
+      } catch (error) {
+        console.error("Failed to fetch membership plans:", error);
+      }
+    };
+    
+    fetchPlans();
+  }, [dispatch]);
+
   const planValue = watch("plan");
   const startDateValue = watch("startDate");
   const genderValue = watch("gender");
@@ -125,22 +140,13 @@ function AddMemberModal({ onClose }) {
     if (!planValue || !startDateValue) return null;
     
     const date = new Date(startDateValue);
-    switch(planValue) {
-      case "basic":
-        date.setMonth(date.getMonth() + 1);
-        break;
-      case "standard":
-        date.setMonth(date.getMonth() + 3);
-        break;
-      case "premium":
-        date.setMonth(date.getMonth() + 6);
-        break;
-      case "annual":
-        date.setFullYear(date.getFullYear() + 1);
-        break;
-      default:
-        return null;
-    }
+    
+    // Find the selected plan to get its duration
+    const selectedPlan = plans?.find(plan => plan.id.toString() === planValue);
+    if (!selectedPlan) return null;
+    
+    // Add the duration from the plan
+    date.setMonth(date.getMonth() + selectedPlan.duration);
     
     return date;
   };
@@ -165,8 +171,8 @@ function AddMemberModal({ onClose }) {
     }
     
     // Dispatch with FormData
-    const res=await dispatch(addMemberFeth(formData)).unwrap();
-    console.log("Membersddcfsy:", res);
+    const res = await dispatch(addMemberFeth(formData)).unwrap();
+    console.log("Member added:", res);
     reset(); // Reset form after submission
     onClose(); // Close the modal after submission
   };
@@ -224,7 +230,6 @@ function AddMemberModal({ onClose }) {
   const GenderSelector = () => (
     <div className="space-y-2">
       <Label className="text-slate-300 font-medium flex items-center gap-2">
-        {/* <Gender className="h-4 w-4" /> */}
         Gender
         <span className="text-red-400">*</span>
       </Label>
@@ -261,7 +266,6 @@ function AddMemberModal({ onClose }) {
           }`}
           onClick={() => setValue("gender", "other", { shouldValidate: true })}
         >
-          {/* <Gender className="h-6 w-6 mb-1" /> */}
           <span className="text-sm font-medium">Other</span>
         </div>
       </div>
@@ -435,15 +439,23 @@ function AddMemberModal({ onClose }) {
                   <Select 
                     onValueChange={(value) => setValue("plan", value, { shouldValidate: true })}
                     value={planValue}
+                    disabled={plansLoading}
                   >
                     <SelectTrigger className="bg-slate-700/70 border-slate-600 text-white focus:border-orange-500 focus:ring-orange-500/20 transition-all">
-                      <SelectValue placeholder="Select plan" />
+                      <SelectValue placeholder={plansLoading ? "Loading plans..." : "Select plan"} />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                      <SelectItem value="basic">Basic (1 Month)</SelectItem>
-                      <SelectItem value="standard">Standard (3 Months)</SelectItem>
-                      <SelectItem value="premium">Premium (6 Months)</SelectItem>
-                      <SelectItem value="annual">Annual (12 Months)</SelectItem>
+                      {plansLoading ? (
+                        <SelectItem value="loading" disabled>Loading plans...</SelectItem>
+                      ) : plans && plans.length > 0 ? (
+                        plans.map((plan) => (
+                          <SelectItem key={plan.id} value={plan.id.toString()}>
+                            {plan.planName} ({plan.duration} months) - ₹{plan.price}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="none" disabled>No plans available</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   {errors.plan && (
@@ -469,11 +481,13 @@ function AddMemberModal({ onClose }) {
                     <span className="font-medium">Membership Duration</span>
                   </div>
                   <p className="text-slate-400 text-xs mt-1">
-                    {planValue === "basic" && "1 month membership"}
-                    {planValue === "standard" && "3 months membership"}
-                    {planValue === "premium" && "6 months membership"}
-                    {planValue === "annual" && "12 months membership"}
-                    {` from ${new Date(startDateValue).toLocaleDateString()} to ${calculateMembershipEnd()?.toLocaleDateString()}`}
+                    {plans && (() => {
+                      const selectedPlan = plans.find(plan => plan.id.toString() === planValue);
+                      if (selectedPlan) {
+                        return `${selectedPlan.duration} months membership from ${new Date(startDateValue).toLocaleDateString()} to ${calculateMembershipEnd()?.toLocaleDateString()}`;
+                      }
+                      return "";
+                    })()}
                   </p>
                 </div>
               )}
@@ -494,7 +508,7 @@ function AddMemberModal({ onClose }) {
               <Button
                 type="submit"
                 className="flex-1 bg-orange-500 hover:bg-orange-600 transition-all shadow-md hover:shadow-lg active:scale-95"
-                disabled={isLoading}
+                disabled={isLoading || plansLoading}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">

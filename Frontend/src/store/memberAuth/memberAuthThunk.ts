@@ -31,7 +31,7 @@ export const loginMemberFeth=createAsyncThunk<any,memberlogin,ThunkApiConfig>(
             console.log("resdf",response)
             if(response.success){
                 toast.success(response.message)
-                return response;
+                return response.data;
             }else{
                 toast.error(response.response?.data?.message)
                 return rejectWithValue(response.data.message);

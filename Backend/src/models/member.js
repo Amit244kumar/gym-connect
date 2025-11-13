@@ -2,6 +2,7 @@ import { Model, DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 import bcrypt from "bcryptjs";
 import GymOwner from "./gymOwner.js";
+import OwnerMembershipPlan from "./OwnerMembershipPlan.js";
 
 class Member extends Model {
   async comparePassword(candidatePassword) {
@@ -74,9 +75,10 @@ Member.init(
 
     // Membership related fields
     membershipType: {
-      type: DataTypes.ENUM("basic", "standard", "premium", "annual"),
-      allowNull: true,
-      field: "membership_type"
+     type:DataTypes.INTEGER,
+     allowNull:true,
+     field:"membershipPlan_id",
+     references:{model:OwnerMembershipPlan,key:"id"}
     },
 
     membershipStartDate: {
@@ -91,11 +93,6 @@ Member.init(
       field: "membership_end_date"
     },
 
-    membershipExpireInDays: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      field: "membership_expire_in_days"
-    },
 
     membershipStatus: {
       type: DataTypes.ENUM("active", "expired", "suspended"),

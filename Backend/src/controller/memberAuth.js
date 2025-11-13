@@ -1,4 +1,4 @@
-import {GymOwner, Member } from '../models/index.js';
+import {GymOwner, Member, OwnerMembershipPlan } from '../models/index.js';
 import { validationResult } from "express-validator";
 import bcrypt from "bcryptjs";
 import crypto from "crypto"; // Make sure to import crypto
@@ -68,40 +68,15 @@ const registerMember = async (req, res) => {
     const tempPassword = crypto.randomBytes(10).toString('base64url').substring(0, 10);
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
     console.log("dsafasads",tempPassword,hashedPassword)
-    // 4. Calculate end date and expiry days based on plan
+
     let membershipEndDate = null;
-    let expireInDays = 0;
     if (membershipStartDate && plan) {
       const startDate = new Date(membershipStartDate);
       
-      // Calculate end date based on plan
-      switch (plan) {
-        case "basic":
-          membershipEndDate = new Date(startDate);
-          membershipEndDate.setMonth(startDate.getMonth() + 1);
-          expireInDays = 30;
-          break;
-        case "standard":
-          membershipEndDate = new Date(startDate);
-          membershipEndDate.setMonth(startDate.getMonth() + 3);
-          expireInDays = 90;
-          break;
-        case "premium":
-          membershipEndDate = new Date(startDate);
-          membershipEndDate.setMonth(startDate.getMonth() + 6);
-          expireInDays = 180;
-          break;
-        case "annual":
-          membershipEndDate = new Date(startDate);
-          membershipEndDate.setFullYear(startDate.getFullYear() + 1);
-          expireInDays = 365;
-          break;
-        default:
-          // Default to 1 month if plan is not recognized
-          membershipEndDate = new Date(startDate);
-          membershipEndDate.setMonth(startDate.getMonth() + 1);
-          expireInDays = 30;
-      }
+      const membershipPlan=await OwnerMembershipPlan.findByPk(plan)
+      console.log("dfs",membershipPlan,membershipPlan.month)
+      membershipEndDate = new Date(startDate);
+      membershipEndDate.setMonth(startDate.getMonth() + membershipPlan.duration);
       
       // Format dates as YYYY-MM-DD for database storage
       membershipEndDate = membershipEndDate.toISOString().split('T')[0];
@@ -120,7 +95,6 @@ const registerMember = async (req, res) => {
       membershipType: plan, // Using 'plan' from request as 'membershipType'
       membershipStartDate,
       membershipEndDate,
-      membershipExpireInDays: expireInDays,
       membershipStatus: "active",
       ownerId // assuming owner is authenticated
     };
@@ -205,7 +179,12 @@ const getAllMembers = async (req, res) => {
       attributes: { exclude: ['password', 'resetpasswordToken', 'resetpasswordExpires'] },
       order: [['createdAt', 'DESC']],
       limit,
-      offset
+      offset,
+      include:{
+        
+        model:OwnerMembershipPlan,
+        attributes:["planName"]
+      }
     });
 
     console.log("membersdddd",members)

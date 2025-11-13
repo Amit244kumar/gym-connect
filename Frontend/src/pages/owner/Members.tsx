@@ -42,6 +42,7 @@ import { toast } from "sonner";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/index";
 import { getAllMembersFeth } from "@/store/memberAuth/memberAuthThunk";
+import { getMembershipPlansfeth } from "@/store/ownerMembershipPlan/ownerMembershipPlanThunk"; // Import this
 import { Member, MemberQueryParams } from "@/type/memberTypes";
 import { formatDate, getFullImageUrl } from "@/components/utils/helper";
 import Shimmer from "@/components/ui/Shimmer";
@@ -71,7 +72,7 @@ export const getPlanBadge = (plan: string) => {
     case "annual":
       return <Badge className="bg-indigo-500/20 text-indigo-400">Annual</Badge>;
     default:
-      return <Badge className="bg-gray-500/20 text-gray-400">Unknown</Badge>;
+      return <Badge className="bg-gray-500/20 text-gray-400">{plan}</Badge>;
   }
 };
 
@@ -112,6 +113,7 @@ const AVAILABLE_COLUMNS = [
 
 const Members = () => {
   const { isLoading, memberData: members, isAdded } = useSelector((state: RootState) => state.memberAuth);
+  const { plans, isLoading: plansLoading } = useSelector((state: RootState) => state.ownerMembershipPlan); // Add this
   console.log("memberData", members);
   const dispatch = useDispatch<AppDispatch>();
   
@@ -133,6 +135,20 @@ const Members = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Fetch membership plans
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        await dispatch(getMembershipPlansfeth()).unwrap();
+      } catch (error) {
+        console.error("Failed to fetch membership plans:", error);
+        toast.error('Failed to load membership plans');
+      }
+    };
+    
+    fetchPlans();
+  }, [dispatch]);
 
   // Fetch members from API
   const fetchMembers = async (page: number, limit: number, search: string, filters: FilterOptions) => {
@@ -354,12 +370,20 @@ const Members = () => {
                       className="w-full bg-slate-700 border border-slate-600 rounded text-white p-1 text-sm"
                       value={filters.membershipType || 'all'}
                       onChange={(e) => handleFilterChange('membershipType', e.target.value)}
+                      disabled={plansLoading}
                     >
                       <option value="all">All Types</option>
-                      <option value="basic">Basic</option>
-                      <option value="standard">Standard</option>
-                      <option value="premium">Premium</option>
-                      <option value="annual">Annual</option>
+                      {plansLoading ? (
+                        <option value="loading" disabled>Loading plans...</option>
+                      ) : plans && plans.length > 0 ? (
+                        plans.map((plan) => (
+                          <option key={plan.id} value={plan.planName.toLowerCase()}>
+                            {plan.planName}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="none" disabled>No plans available</option>
+                      )}
                     </select>
                   </div>
                   <div className="mb-3">
@@ -500,7 +524,7 @@ const Members = () => {
                         
                         {/* Plan Column */}
                         {isColumnVisible('plan') && (
-                          <TableCell>{getPlanBadge(member.membershipType)}</TableCell>
+                          <TableCell>{getPlanBadge(member?.OwnerMembershipPlan?.planName)}</TableCell>
                         )}
                         
                         {/* Status Column */}

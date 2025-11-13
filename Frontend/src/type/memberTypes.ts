@@ -11,6 +11,7 @@ export interface memberData{
     plan: string
     startDate:string
     profileImage: string
+    
 }
 export interface Member {
   id: number;
@@ -27,6 +28,9 @@ export interface Member {
   address?: string;
   dateOfBirth?: string;
   memberPhoto?: string;
+  OwnerMembershipPlan:{
+    planName:string
+  }
 }
 export interface memberAuthState {
     memberData:Member[]

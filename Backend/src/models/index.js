@@ -11,6 +11,12 @@ GymOwner.hasMany(Member, { foreignKey: "ownerId" });
 Member.hasMany(Membership, { foreignKey: "memberId" });
 Membership.belongsTo(Member, { foreignKey: "memberId" });
 
+Member.belongsTo(OwnerMembershipPlan, {
+  foreignKey: "membershipType", // this is the column you already have
+
+});
+
+
 OwnerMembershipPlan.belongsTo(GymOwner, { foreignKey: "ownerId" });
 GymOwner.hasMany(OwnerMembershipPlan, { foreignKey: "ownerId" });
 
