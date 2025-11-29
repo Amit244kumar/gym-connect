@@ -495,7 +495,7 @@ const Members = () => {
                                 src={getFullImageUrl(member.memberPhoto)}
                                 alt="Profile"
                                 className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
-                                crossOrigin="anonymous"
+                                // crossOrigin="anonymous"
                               />
                             ) : (
                               <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-600">

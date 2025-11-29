@@ -239,7 +239,8 @@ const memberLogin= async (req,res)=>{
     }
     const {email,password}=req.body
     const isExist=await Member.findOne({
-      where:{email}})
+      where:{email}
+    })
     if(!isExist){
       return res.status(404).json({
         success:false,

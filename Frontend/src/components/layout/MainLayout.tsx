@@ -59,14 +59,14 @@ const MainLayout = () => {
             setShowVerificationModal(!response.isEmailVerified);
           } catch (error) {
             console.error("Error fetching profile:", error);
-            navigate('/login');
+            // navigate('/login');
           }
         } else {
           navigate('/login');
         }
       }
       fetchProfile()
-    }, [token, dispatch, navigate]);
+    }, []);
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -123,6 +123,7 @@ const MainLayout = () => {
     { name: 'Membership Plans', icon: CreditCard, path: 'owner/membershipPlan' },
     { name: 'Reports', icon: BarChart3, path: '/owner/reports' },
     { name: 'Notifications', icon: Bell, path: '/owner/notifications' },
+    { name:'member checkout',icon:Activity,path:'/owner/members/checkout'},
     { name: 'Messages', icon: MessageSquare, path: '/owner/messages' },
     { name: 'Settings', icon: Settings, path: 'owner/settings' },
     { name: 'Help & Support', icon: HelpCircle, path: '/Owner/help' },
@@ -230,7 +231,7 @@ const MainLayout = () => {
                   src={getFullImageUrl(owner.ownerPhoto)}
                   alt="Profile"
                   className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
-                  crossOrigin="anonymous"
+                  // crossOrigin="anonymous"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-600">
@@ -241,6 +242,7 @@ const MainLayout = () => {
                 <p className="font-medium text-white truncate max-w-[120px]">{owner?.ownerName || 'Gym Owner'}</p>
                 <p className="text-xs text-slate-400 truncate max-w-[120px]">{owner?.gymName || 'Your Gym'}</p>
               </div>
+              
             </div>
           </div>
 
@@ -321,6 +323,12 @@ const MainLayout = () => {
               </div>
 
               <div className="flex items-center space-x-3">
+                {/* Add Member Button - Mobile only */}
+                <Button size="sm" onClick={handleAddMember} className="md:hidden bg-orange-500 hover:bg-orange-600">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Member
+                </Button>
+
                 {/* Add Member Button - Desktop */}
                 <Button size="sm" onClick={handleAddMember} className="hidden md:flex bg-orange-500 hover:bg-orange-600">
                   <Plus className="h-4 w-4 mr-2" />

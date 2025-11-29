@@ -12,6 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requireAuth = true }) =
   const { isLoading, isAuthenticated} = useSelector((state: RootState) => state.gymOwnerAuth);
   const slug=localStorage.getItem("gymOwnerSlug")
   const location = useLocation();
+  const memberToken=localStorage.getItem("memberToken")
   
   // if (isLoading) {
   //   return (
@@ -20,6 +21,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requireAuth = true }) =
   //     </div>
   //   );
   // }
+  if(memberToken){
+    return <Navigate to="/member/dashboard" replace />;
+  }
 
   // If route requires auth but user is not authenticated
   if (requireAuth && !isAuthenticated) {

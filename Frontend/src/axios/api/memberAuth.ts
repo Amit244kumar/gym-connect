@@ -19,6 +19,22 @@ const memberAuth=(instance:AxiosInstance)=>({
             return error
         }
     },
+    getMemberProfile:async(token:string)=>{
+         try {
+            const {data}=await instance.get<ApiResponse>(`${baseURL}/getMemberById/${memberId}`)
+            return data
+        } catch (error) {
+            return error;
+        }
+    },
+    getMemberById:async(memberId:string)=>{
+        try {
+            const {data}=await instance.get<ApiResponse>(`${baseURL}/getMemberById/${memberId}`)
+            return data
+        } catch (error) {
+            return error;
+        }
+    },
     getAllMembers:async(params:MemberQueryParams)=>{
         try {
             const {data}=await instance.get<ApiResponse>(`${baseURL}/getMembers`,{params})

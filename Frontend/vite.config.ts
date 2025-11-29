@@ -16,6 +16,9 @@ export default defineConfig({
     outDir: "dist/spa",
   },
   plugins: [react()],
+   optimizeDeps: {
+    include: ['react-qr-scanner']
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

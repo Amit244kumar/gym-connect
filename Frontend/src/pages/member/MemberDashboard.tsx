@@ -1,3 +1,5 @@
+// pages/MemberDashboard.tsx
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,8 +11,24 @@ import {
   Settings,
   Smartphone,
 } from "lucide-react";
+import QRScanner from "./QRScanner";
 
 export default function MemberDashboard() {
+  const [showScanner, setShowScanner] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const handleScanSuccess = (result: string) => {
+    // Here you would typically process the QR code result
+    // For example, check the member in, etc.
+    setResult(result);
+    console.log("QR Code scanned:", result);
+    // You could add additional logic here, like showing a success message
+    // or sending the result to your backend
+  };
+
+  const closeScanner = () => {
+    setShowScanner(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
       {/* Header */}
@@ -70,14 +88,22 @@ export default function MemberDashboard() {
               <QrCode className="h-4 w-4 text-orange-400" />
             </CardHeader>
             <CardContent>
-              <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+              <Button 
+                onClick={() => setShowScanner(true)}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+              >
                 <QrCode className="h-4 w-4 mr-2" />
                 Scan QR Code
               </Button>
             </CardContent>
           </Card>
         </div>
-
+        {result && (
+           <div className="mb-6 p-4 bg-green-800/30 border border-green-700 rounded-lg text-green-200">
+            QR Code Scanned Successfully: <strong>{result}</strong>
+          </div>  
+        )
+        }
         <div className="text-center py-20">
           <div className="max-w-md mx-auto">
             <div className="w-24 h-24 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -100,6 +126,14 @@ export default function MemberDashboard() {
           </div>
         </div>
       </div>
+
+      {/* QR Scanner Modal */}
+      {showScanner && (
+        <QRScanner
+          onScanSuccess={handleScanSuccess} 
+          onClose={closeScanner} 
+        />
+      )}
     </div>
   );
 }

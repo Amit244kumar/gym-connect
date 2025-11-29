@@ -44,24 +44,24 @@ export const loginMemberFeth=createAsyncThunk<any,memberlogin,ThunkApiConfig>(
 )
 
 
-// export const getMemberByIdFeth=createAsyncThunk<any,string,ThunkApiConfig>(
-//     "getMemberByIdFeth/getMemberById",
-//     async(memberId:string, {rejectWithValue})=>{
-//         try {
-//             const response=await api.memberAuth.getMemberById(memberId)
-//             console.log("resdf",response)
-//             if(response.success){
-//                 return response;
-//             }else{
-//               toast.error(response.response?.data?.message)
-//               return rejectWithValue(response.data.message);
-//             }
-//         } catch (error) {
-//             const errorMessage = error.response?.data?.message || error.message;
-//             return rejectWithValue(errorMessage);
-//         }
-//     }
-// )
+export const getMemberByIdFeth=createAsyncThunk<any,string,ThunkApiConfig>(
+    "getMemberByIdFeth/getMemberById",
+    async(memberId:string, {rejectWithValue})=>{
+        try {
+            const response=await api.memberAuth.getMemberById(memberId)
+            console.log("resdf",response)
+            if(response.success){
+                return response;
+            }else{
+              toast.error(response.response?.data?.message)
+              return rejectWithValue(response.data.message);
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message;
+            return rejectWithValue(errorMessage);
+        }
+    }
+)
 
 export const getAllMembersFeth=createAsyncThunk<any,MemberQueryParams,ThunkApiConfig>(
     "getAllMembersFeth/getAllMembers",

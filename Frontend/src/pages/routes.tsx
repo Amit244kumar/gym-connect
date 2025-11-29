@@ -19,6 +19,7 @@ import Notifications from './owner/Notifications';
 import Messages from './owner/Messages';
 import Settings from './owner/Settings';
 import Help from './owner/Help';
+import MemberCheckIn from './owner/memberCheckIn';
   export const AppRouters=()=>{
       const router=createBrowserRouter(
         createRoutesFromElements(
@@ -46,6 +47,7 @@ import Help from './owner/Help';
                   <Route path="/owner/membershipPlan" element={<MembershipPlan />} />
                   <Route path="/owner/reports" element={<Reports />} />
                   <Route path="/owner/notifications" element={<Notifications />} />
+                  <Route path="/owner/members/checkout" element={<MemberCheckIn />} />
                   <Route path="/owner/messages" element={<Messages />} />
                   <Route path="/owner/settings" element={<Settings />} />
                   <Route path="/owner/help" element={<Help />} />

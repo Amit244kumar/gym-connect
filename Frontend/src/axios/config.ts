@@ -6,12 +6,12 @@ interface configType{
     keepalive:boolean
 }
 export const config:configType={
-    baseURL:'http://localhost:5000',
+    baseURL:'https://circinate-noninherited-whitley.ngrok-free.dev',
+    // baseURL:'http://localhost:5000',
     keepalive: true,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
       'X-Requested-With': 'XMLHttpRequest',
+      'ngrok-skip-browser-warning': 'true',
     },
 }
 
@@ -21,7 +21,9 @@ const api: AxiosInstance = axios.create(config);
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('gymOwnerToken');
+    const ownerToken = localStorage.getItem('gymOwnerToken');
+    const memberToken = localStorage.getItem('memberToken');
+    const token = ownerToken || memberToken;
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
