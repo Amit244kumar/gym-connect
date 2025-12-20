@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X, Camera } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
+import { checkInMemberByQRfeth } from "@/store/memberAuth/memberAuthThunk";
+import { playSuccessSound, vibrateSuccess } from "@/components/utils/helper";
 
 interface QRScannerProps {
   onScanSuccess: (result: string) => void;
@@ -15,7 +19,9 @@ export default function QRScanner({ onScanSuccess, onClose }: QRScannerProps) {
   const [isScanning, setIsScanning] = useState(true);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const qrboxElementRef = useRef<HTMLDivElement>(null);
-
+  const {memberProfile,isLoading}=useSelector((state:RootState)=>state.memberAuth)
+  const dispatch = useDispatch<AppDispatch>();
+  const successAudioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => {
     if (!isScanning) return;
 
@@ -34,8 +40,8 @@ export default function QRScanner({ onScanSuccess, onClose }: QRScannerProps) {
           (decodedText: string) => {
             console.log(`QR Code detected: ${decodedText}`);
             setScannerResult(decodedText);
-            onScanSuccess(decodedText);
-            setIsScanning(false);
+            // onScanSuccess(decodedText);
+            // setIsScanning(false);
             stopScanner();
           },
           (errorMessage: string) => {
@@ -68,6 +74,27 @@ export default function QRScanner({ onScanSuccess, onClose }: QRScannerProps) {
     };
   }, [isScanning, onScanSuccess]);
 
+  useEffect(() => {
+    const memberCheckIn = async() => {
+     try {
+      successAudioRef.current = new Audio("/sounds/success.mp3");
+      if (scannerResult) {
+        const response = await dispatch(checkInMemberByQRfeth(scannerResult));
+        if (checkInMemberByQRfeth.fulfilled.match(response)) {
+        // ✅ API SUCCESS 
+        vibrateSuccess();
+        // playSuccessSound();
+         successAudioRef.current?.play().catch(() => {});
+      }
+        console.log("Check-in response:", response);
+      }
+     } catch (error) {
+      console.error("Error during member check-in:", error);
+     }
+    };
+    memberCheckIn();
+  }, [scannerResult]);
+
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-slate-800 border-slate-700">
@@ -86,7 +113,11 @@ export default function QRScanner({ onScanSuccess, onClose }: QRScannerProps) {
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          {scannerResult ? (
+          {scannerResult ? isLoading?
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+            </div>
+          :(
             <div className="text-center py-6">
               <div className="text-green-400 font-medium mb-2">Scan Successful!</div>
               <div className="text-white bg-slate-700/50 p-3 rounded-lg break-all">

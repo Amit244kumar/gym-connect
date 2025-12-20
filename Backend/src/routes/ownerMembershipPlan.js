@@ -1,30 +1,30 @@
 import { memberShipPlanValidation, updateMemberShipPlanValidation } from "../validator/ownerMembersipPlan.js";
 import { Router } from "express";
-import authMiddleware from '../middleware/auth.js';
+import ownerAuthMiddleware from '../middleware/auth.js';
 import { createMembershipPlan,deleteMembershipPlan,disableMembershipPlan,getMembershipPlans, updateMembershipPlan } from "../controller/OwnerMemberShipPlan.js";
 const router = Router();
 
 router.post("/createMembershipPlan",
-    authMiddleware,
+    ownerAuthMiddleware,
     memberShipPlanValidation,
     createMembershipPlan
 )
 router.put("/updateMembershipPlan",
-    authMiddleware,
+    ownerAuthMiddleware,
     updateMemberShipPlanValidation,
     updateMembershipPlan
 );
 router.get("/getMembershipPlans",
-    authMiddleware,
+    ownerAuthMiddleware,
     getMembershipPlans
 );
 router.patch("/disableMembershipPlan/:planId",
-    authMiddleware,
+    ownerAuthMiddleware,
     disableMembershipPlan
 );
 
 router.delete("/deleteMembershipPlan/:planId",
-    authMiddleware,
+    ownerAuthMiddleware,
     deleteMembershipPlan
 );
 

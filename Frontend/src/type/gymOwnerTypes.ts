@@ -1,5 +1,4 @@
 
-import { memeber } from "./memberTypes";
 // Types
 interface trialInfo {
     totalTrialDays: number;
@@ -25,6 +24,7 @@ export interface GymOwner {
     ownerPhoto?: string;
     registrationUrl?: string;
     totalMembers: number;
+    totalCheckInsToday: number;
     trialInfo:trialInfo; 
     recentMembers?: memeber
 }

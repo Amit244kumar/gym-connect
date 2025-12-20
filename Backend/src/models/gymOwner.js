@@ -2,6 +2,7 @@ import { DataTypes, Model } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import sequelize from '../config/database.js';
 
+
 function toSlug(value) {
   return String(value || '')
     .toLowerCase()

@@ -1,4 +1,4 @@
-import { GymOwner, Member, OwnerMembershipPlan } from '../models/index.js';
+import { CheckIn, GymOwner, Member, OwnerMembershipPlan } from '../models/index.js';
 import { validationResult } from 'express-validator';
 import {  generateEmailVerificationToken, generatePhoneVerificationOTP, generateOwnerToken } from '../utils/helper.js';
 import { sendEmailVerification, sendPasswordResetEmail } from '../helper/emailHelper.js';
@@ -263,7 +263,7 @@ export const getProfile = async (req, res) => {
       include:{
         model:OwnerMembershipPlan,
         attributes:["planName"]
-      }
+      },
     });
     console.log("sdfsdd",recentMembers)
      recentMembers.forEach(member => {
@@ -290,12 +290,22 @@ export const getProfile = async (req, res) => {
 
     const timeUntilTrialEnd = trialEnd - today;
     const daysLeft = Math.ceil(timeUntilTrialEnd / (1000 * 60 * 60 * 24));
-
+    const totalCheckInsToday=await CheckIn.count({
+      where:{
+        ownerId,
+        createdAt: {
+          [Op.gte]: new Date(new Date().setHours(0, 0, 0, 0)),
+          [Op.lte]: new Date(new Date().setHours(23, 59, 59, 999))
+        }
+      }
+    });
+    console.log("Today's Check-Ins",totalCheckInsToday)    
     res.json({
       success: true,
       message: 'Profile fetched successfully',
       data: {
         totalMembers:members,
+        totalCheckInsToday,
         ...owner.dataValues,
         trialInfo: {
           totalTrialDays,

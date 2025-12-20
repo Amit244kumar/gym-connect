@@ -52,45 +52,15 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Rate limiting
-// const limiter = rateLimit({
-//   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-//   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-//   message: {
-//     error: 'Too many requests from this IP, please try again later.',
-//     retryAfter: Math.ceil(parseInt(process.env.RATE_LIMIT_WINDOW_MS) / 1000 / 60),
-//   },
-//   standardHeaders: true,
-//   legacyHeaders: false,
-// });
-
-// // Speed limiting
-// const speedLimiter = slowDown({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   delayAfter: 50, // allow 50 requests per 15 minutes, then...
-//   delayMs: 500, // begin adding 500ms of delay per request above 50
-// });
-// sequelize.sync({ alter: true });
 app.use('/public', express.static(path.join(__dirname, './public')));
-// app.use('/api/', limiter);
-// app.use('/api/', speedLimiter);
+
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, }));
 
 // Compression middleware
 app.use(compression());
-
-// Logging middleware
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-} else {
-  app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
-}
-
-// Static files
-// app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.get('/', (req, res) => {
   res.send(`Welcome to GymPro API v${API_VERSION}`);

@@ -1,5 +1,5 @@
 import express from 'express';
-import authMiddleware from '../middleware/auth.js';
+import ownerAuthMiddleware, { memberAuthMiddleware } from '../middleware/auth.js';
 
 import { validateMemberLogin, ValidationMemberRegister } from '../validator/memberAuth.js';
 import memberController from '../controller/memberAuth.js';
@@ -8,13 +8,17 @@ const router = express.Router();
 
 
 router.post('/addMember',
-    authMiddleware,
+    ownerAuthMiddleware,
     uploadMember.single('profileImage'),
     ValidationMemberRegister,
     memberController.registerMember
 );
+router.get('/getMemberProfile',
+    memberAuthMiddleware,
+    memberController.getMemberProfile
+);
 router.get('/getMembers',
-    authMiddleware,
+    ownerAuthMiddleware,
     memberController.getAllMembers
 );
 
@@ -22,6 +26,21 @@ router.post('/loginMember',
     validateMemberLogin,
     memberController.memberLogin
 )
+// router.get('/getMemberById/:id',
+//     ownerAuthMiddleware,
+//     memberController.getMemberById
+// );
+
+router.post('/memberLogout',
+    memberAuthMiddleware,
+    memberController.memberLogout
+)
+
+router.post('/checkInMemberByQR',
+    memberAuthMiddleware,
+    memberController.memberCheckIn
+)
+
 // router.get('/', protect, authorize('owner'), async (req, res) => {
 //   try {
 //     const page = parseInt(req.query.page) || 1;

@@ -19,9 +19,9 @@ const memberAuth=(instance:AxiosInstance)=>({
             return error
         }
     },
-    getMemberProfile:async(token:string)=>{
+    getMemberProfile:async()=>{
          try {
-            const {data}=await instance.get<ApiResponse>(`${baseURL}/getMemberById/${memberId}`)
+            const {data}=await instance.get<ApiResponse>(`${baseURL}/getMemberProfile`)
             return data
         } catch (error) {
             return error;
@@ -38,6 +38,22 @@ const memberAuth=(instance:AxiosInstance)=>({
     getAllMembers:async(params:MemberQueryParams)=>{
         try {
             const {data}=await instance.get<ApiResponse>(`${baseURL}/getMembers`,{params})
+            return data
+        } catch (error) {
+            return error;
+        }
+    },
+    memberLogout:async()=>{
+        try {
+            const {data}=await instance.post<ApiResponse>(`${baseURL}/memberLogout`)
+            return data
+        } catch (error) {
+            return error;
+        } 
+    },
+    checkInMemberByQR:async(qrData:string)=>{
+        try {
+            const {data}=await instance.post<ApiResponse>(`${baseURL}/checkInMemberByQR`,{qrData})
             return data
         } catch (error) {
             return error;

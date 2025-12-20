@@ -123,7 +123,7 @@ const MainLayout = () => {
     { name: 'Membership Plans', icon: CreditCard, path: 'owner/membershipPlan' },
     { name: 'Reports', icon: BarChart3, path: '/owner/reports' },
     { name: 'Notifications', icon: Bell, path: '/owner/notifications' },
-    { name:'member checkout',icon:Activity,path:'/owner/members/checkout'},
+    // { name:'member checkout',icon:Activity,path:'/owner/members/checkout'},
     { name: 'Messages', icon: MessageSquare, path: '/owner/messages' },
     { name: 'Settings', icon: Settings, path: 'owner/settings' },
     { name: 'Help & Support', icon: HelpCircle, path: '/Owner/help' },

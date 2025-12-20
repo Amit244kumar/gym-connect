@@ -1,4 +1,4 @@
-import {GymOwner, Member, OwnerMembershipPlan } from '../models/index.js';
+import {CheckIn, GymOwner, Member, OwnerMembershipPlan } from '../models/index.js';
 import { validationResult } from "express-validator";
 import bcrypt from "bcryptjs";
 import crypto from "crypto"; // Make sure to import crypto
@@ -268,4 +268,107 @@ const memberLogin= async (req,res)=>{
     });
   }
 }
-export default { registerMember,getAllMembers,memberLogin };
+const memberLogout = async (req, res) => {
+  try {
+    // In JWT-based auth, logout is typically handled client-side
+    // But you can add any cleanup logic here if needed
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Logout failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+const getMemberProfile=async (req,res)=>{
+  try {
+    const memberId=req.user.id
+    const member=await Member.findByPk(memberId,{
+      attributes: { exclude: ['password', 'resetpasswordToken', 'resetpasswordExpires'] },
+    })
+    console.log("memberprofile",member)
+    if(!member){
+      return res.status(404).json({
+        success:false,
+        message:"Member not found"
+      })
+    }
+    res.status(200).json({
+      success:true,
+      message:"Member profile fetched successfully",
+      data:member
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: "Server error while fetching member profile",
+      details: error.message,
+    });
+  }
+}
+  
+const memberCheckIn=async (req,res)=>{
+  try {
+    const memberId=req.user.id
+    const {qrData}=req.body
+    console.log("qrData",qrData)
+    const member=await Member.findByPk(memberId)
+    console.log("memberCheckIn",member,qrData)
+    if(!member){
+      return res.status(404).json({
+        success:false,
+        message:"Member not found"
+      })
+    }
+    // Add check-in logic here (e.g., update lastCheckIn field)
+    const isQRValid= await GymOwner.findOne({where:{id:qrData}})
+    if(!isQRValid){
+      res.status(400).json({
+        success:false,
+        message:"Invalid QR code"
+      })  
+    }
+    const isAlreadyCheckedIn=await CheckIn.findOne({
+      where:{
+        memberId:member.id,
+        createdAt:{
+          [Op.gte]:new Date(new Date().setHours(0,0,0,0)),
+          [Op.lte]:new Date(new Date().setHours(23,59,59,999))
+        }
+      }
+    })
+    console.log("wwwwwwwwww",isAlreadyCheckedIn)
+    if(isAlreadyCheckedIn){
+      return res.status(400).json({
+        success:false, 
+        message:"You already checked in today",
+        data:{isAlreadyCheckedIn:true}
+      })
+    }
+    const checkin = await CheckIn.create({
+      memberId: member.id,
+      ownerId: isQRValid.id,
+      check_status: 'success',
+    });
+    console.log("checqwaswkin",checkin)
+    res.status(200).json({
+      success:true,
+      message:"successfully checked in",
+      data:checkin
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false, 
+      error: "Server error while member check-in",
+      details: error.message,
+    });
+  }
+};
+export default { registerMember,getAllMembers,memberLogin,memberLogout,getMemberProfile,memberCheckIn };

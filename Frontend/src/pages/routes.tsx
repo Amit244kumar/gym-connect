@@ -20,6 +20,8 @@ import Messages from './owner/Messages';
 import Settings from './owner/Settings';
 import Help from './owner/Help';
 import MemberCheckIn from './owner/memberCheckIn';
+import MemberLayout from '@/components/layout/MemberLayout';
+import MemberProfile from './member/MyProfile';
   export const AppRouters=()=>{
       const router=createBrowserRouter(
         createRoutesFromElements(
@@ -47,15 +49,23 @@ import MemberCheckIn from './owner/memberCheckIn';
                   <Route path="/owner/membershipPlan" element={<MembershipPlan />} />
                   <Route path="/owner/reports" element={<Reports />} />
                   <Route path="/owner/notifications" element={<Notifications />} />
-                  <Route path="/owner/members/checkout" element={<MemberCheckIn />} />
+                  {/* <Route path="/owner/members/checkout" element={<MemberCheckIn />} /> */}
                   <Route path="/owner/messages" element={<Messages />} />
                   <Route path="/owner/settings" element={<Settings />} />
                   <Route path="/owner/help" element={<Help />} />
                   <Route path="/owner/profile/:gymName" element={<Profile />} />
                 </Route>
-                <Route path="/member/dashboard"  element={<MemberDashboard />}>
-                          
-                </Route>  
+                 <Route element={<MemberLayout />}>
+                    <Route path="/member/dashboard" element={<MemberDashboard />} />
+                    <Route path="/member/profile" element={<MemberProfile memberId={""} />} />
+                    {/*<Route path="/member/membership" element={<MemberMembership />} />
+                    <Route path="/member/attendance" element={<MemberAttendance />} />
+                    <Route path="/member/progress" element={<MemberProgress />} />
+                    <Route path="/member/messages" element={<MemberMessages />} />
+                    <Route path="/member/settings" element={<MemberSettings />} />
+                    <Route path="/member/help" element={<MemberHelp />} /> */}
+                  </Route>
+                  
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
             </>

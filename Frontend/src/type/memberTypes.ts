@@ -38,6 +38,7 @@ export interface memberAuthState {
     isAuthenticated:boolean
     isLoading:boolean
     isAdded:boolean
+    memberProfile:Member | {}
 }
 export interface CredentialsPayload{
     token:string

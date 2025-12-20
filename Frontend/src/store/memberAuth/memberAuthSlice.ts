@@ -1,12 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {CredentialsPayload, memberAuthState,Member} from "../../type/memberTypes"
-import { addMemberFeth, getAllMembersFeth, loginMemberFeth } from './memberAuthThunk';
+import { addMemberFeth, checkInMemberByQRfeth, getAllMembersFeth, getMemberProfileFeth, loginMemberFeth, logoutMemberFeth } from './memberAuthThunk';
+import { stat } from 'fs';
+
 const initialState:memberAuthState={
     memberData:[], 
     token:localStorage.getItem("memberToken"),
     isAuthenticated:!!localStorage.getItem('isAuthenticated') || false,
     isLoading:false,
-    isAdded:false
+    isAdded:false,
+    memberProfile:{}
 }
 
 const memberAuthSlice=createSlice({
@@ -47,10 +50,48 @@ const memberAuthSlice=createSlice({
         })
         .addCase(loginMemberFeth.fulfilled,(state,action)=>{
             localStorage.setItem("memberToken",action.payload)
+            localStorage.setItem("isAuthenticated","true")
+            state.isLoading=false
+            state.isAuthenticated=true
             state.token=action.payload
         })
         .addCase(loginMemberFeth.rejected,(state,action)=>{
             state.isLoading=false
+        })
+        .addCase(logoutMemberFeth.fulfilled,(state,action)=>{
+            state.isAuthenticated=false
+            state.token=null
+            localStorage.removeItem("memberToken")
+            localStorage.removeItem("isAuthenticated")
+        })
+        .addCase(logoutMemberFeth.rejected,(state,action)=>{
+            // Handle logout failure if needed
+            state.isAuthenticated=false
+        })
+        .addCase(logoutMemberFeth.pending,(state,action)=>{
+            // You can set a loading state if needed
+            state.isLoading=true
+        })
+        .addCase(getMemberProfileFeth.pending,(state,action)=>{
+            state.isLoading=true
+        })
+        .addCase(getMemberProfileFeth.fulfilled,(state,action)=>{
+            state.isLoading=false
+            console.log("member profile",action.payload)
+            state.memberProfile=action.payload
+        })
+        .addCase(getMemberProfileFeth.rejected,(state,action)=>{
+            state.isLoading=false
+        })
+        .addCase(checkInMemberByQRfeth.fulfilled,(state,action)=>{
+            state.isLoading=false
+            console.log("Member check-in successful:", action.payload);
+        })
+        .addCase(checkInMemberByQRfeth.rejected,(state,action)=>{
+            state.isLoading=false
+        })
+        .addCase(checkInMemberByQRfeth.pending,(state,action)=>{
+            state.isLoading=true
         })
     }
 })

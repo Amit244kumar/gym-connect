@@ -25,7 +25,7 @@ import {
   
 } from '../validator/gymOwnerAuth.js';
 
-import authMiddleware from '../middleware/auth.js';
+import ownerAuthMiddleware from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -44,12 +44,12 @@ router.post('/login', validateGymOwnerLogin, loginGymOwner);
 
 // GET /api/gym-owner/profile
 // Get gym owner profile
-router.get('/owner-profile', authMiddleware, getProfile);
+router.get('/owner-profile', ownerAuthMiddleware, getProfile);
 
 // PUT /api/gym-owner/profile
 // Update gym owner profile
 router.put('/update-profile', 
-  authMiddleware,
+  ownerAuthMiddleware,
   uploadOwner.single("profileImage"), 
   validateGymOwnerProfileUpdate, 
   updateProfile
@@ -70,11 +70,11 @@ router.get("/verifyResetToken/:token",verifyResetToken);
 
 // POST /api/gym-owner/logout
 // Logout gym owner
-router.post('/logout', authMiddleware, logout);
+router.post('/logout', ownerAuthMiddleware, logout);
 
 // POST /api/gym-owner/refresh-token
 // Refresh JWT token
-router.post('/refresh-token', authMiddleware, refreshToken);
+router.post('/refresh-token', ownerAuthMiddleware, refreshToken);
 
 
 
@@ -82,10 +82,11 @@ router.post('/refresh-token', authMiddleware, refreshToken);
 // Reset password with token
 router.put('/reset-password/:token', validateResetPassword, resetPassword);
 
-router.post('/resend-Email-Verification',authMiddleware,resendEmailVerification);
+router.post('/resend-Email-Verification',ownerAuthMiddleware,resendEmailVerification);
 // POST /api/gym-owner/verify-email
 // Verify email address
-router.post('/verify-email',authMiddleware,verifyEmail);
+router.post('/verify-email',ownerAuthMiddleware,verifyEmail);
+
 
 // POST /api/gym-owner/verify-phone
 // Verify phone number
@@ -97,55 +98,55 @@ router.post('/verify-email',authMiddleware,verifyEmail);
 
 // PUT /api/gym-owner/subscription
 // Update subscription plan
-// router.put('/subscription', authMiddleware, validateSubscriptionPlan, updateSubscription);
+// router.put('/subscription', ownerAuthMiddleware, validateSubscriptionPlan, updateSubscription);
 
 // PUT /api/gym-owner/settings
 // Update gym owner settings
-// router.put('/settings', authMiddleware, validateSettingsUpdate, updateSettings);
+// router.put('/settings', ownerAuthMiddleware, validateSettingsUpdate, updateSettings);
 
 // GET /api/gym-owner/dashboard
 // Get gym owner dashboard data
-// router.get('/dashboard', authMiddleware, getDashboard);
+// router.get('/dashboard', ownerAuthMiddleware, getDashboard);
 
 // GET /api/gym-owner/members
 // Get gym members list
-// router.get('/members', authMiddleware, getMembers);
+// router.get('/members', ownerAuthMiddleware, getMembers);
 
 // GET /api/gym-owner/members/:id
 // Get specific gym member details
-// router.get('/members/:id', authMiddleware, validateGymOwnerId, getMember);
+// router.get('/members/:id', ownerAuthMiddleware, validateGymOwnerId, getMember);
 
 // POST /api/gym-owner/members/:id/renew
 // Renew member membership
-// router.post('/members/:id/renew', authMiddleware, validateGymOwnerId, renewMembership);
+// router.post('/members/:id/renew', ownerAuthMiddleware, validateGymOwnerId, renewMembership);
 
 // DELETE /api/gym-owner/members/:id
 // Delete gym member
-// router.delete('/members/:id', authMiddleware, validateGymOwnerId, deleteMember);
+// router.delete('/members/:id', ownerAuthMiddleware, validateGymOwnerId, deleteMember);
 
 // GET /api/gym-owner/checkins
 // Get gym check-ins
-// router.get('/checkins', authMiddleware, getCheckins);
+// router.get('/checkins', ownerAuthMiddleware, getCheckins);
 
 // GET /api/gym-owner/checkins/today
 // Get today's check-ins
-// router.get('/checkins/today', authMiddleware, getTodayCheckins);
+// router.get('/checkins/today', ownerAuthMiddleware, getTodayCheckins);
 
 // GET /api/gym-owner/analytics
 // Get gym analytics
-// router.get('/analytics', authMiddleware, getAnalytics);
+// router.get('/analytics', ownerAuthMiddleware, getAnalytics);
 
 // GET /api/gym-owner/qr-code
 // Get gym QR code
-// router.get('/qr-code', authMiddleware, getQrCode);
+// router.get('/qr-code', ownerAuthMiddleware, getQrCode);
 
 // GET /api/gym-owner/registration-url
 // Get gym registration URL
-// router.get('/registration-url', authMiddleware, getRegistrationUrl);
+// router.get('/registration-url', ownerAuthMiddleware, getRegistrationUrl);
 
 // PUT /api/gym-owner/notifications
 // Update notification preferences
-// router.put('/notifications', authMiddleware, updateNotifications);
+// router.put('/notifications', ownerAuthMiddleware, updateNotifications);
 
 
 

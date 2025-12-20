@@ -4,6 +4,7 @@ import GymOwner from './gymOwner.js';
 import Membership from './membership.js';
 import OwnerMembershipPlan from './OwnerMembershipPlan.js';
 import MembershipPlanFeature from './MembershipPlanFeature.js';
+import CheckIn from './checkIn.js';
 // Define all associations here
 Member.belongsTo(GymOwner, { foreignKey: "ownerId" });
 GymOwner.hasMany(Member, { foreignKey: "ownerId" });
@@ -24,4 +25,9 @@ MembershipPlanFeature.belongsTo(OwnerMembershipPlan, { foreignKey: "ownerMembers
 OwnerMembershipPlan.hasMany(MembershipPlanFeature, { foreignKey: "ownerMembershipPlanId", as: 'features' });
 // Export all models and sequelize instance
 
-export { Member, GymOwner, Membership, OwnerMembershipPlan, MembershipPlanFeature };
+CheckIn.belongsTo(Member, { foreignKey: "memberId", as: "member" });
+CheckIn.belongsTo(GymOwner, { foreignKey: "ownerId", as: "owner" });
+
+Member.hasMany(CheckIn, { foreignKey: "memberId", as: "checkIns" });
+GymOwner.hasMany(CheckIn, { foreignKey: "ownerId", as: "memberCheckIns" });
+export { Member, GymOwner, Membership, OwnerMembershipPlan, MembershipPlanFeature, CheckIn };    

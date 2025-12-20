@@ -43,7 +43,6 @@ export const loginMemberFeth=createAsyncThunk<any,memberlogin,ThunkApiConfig>(
     }
 )
 
-
 export const getMemberByIdFeth=createAsyncThunk<any,string,ThunkApiConfig>(
     "getMemberByIdFeth/getMemberById",
     async(memberId:string, {rejectWithValue})=>{
@@ -62,7 +61,24 @@ export const getMemberByIdFeth=createAsyncThunk<any,string,ThunkApiConfig>(
         }
     }
 )
-
+export const getMemberProfileFeth=createAsyncThunk<any,void,ThunkApiConfig>(
+    "getMemberProfile/getMemberProfile",
+    async(_, {rejectWithValue})=>{
+        try {
+            const response=await api.memberAuth.getMemberProfile()
+            console.log("resdf",response)
+            if(response.success){
+                return response.data;
+            }else{
+              toast.error(response.response?.data?.message)
+              return rejectWithValue(response.data.message);
+            }   
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message;
+            return rejectWithValue(errorMessage);
+        }
+    }
+)
 export const getAllMembersFeth=createAsyncThunk<any,MemberQueryParams,ThunkApiConfig>(
     "getAllMembersFeth/getAllMembers",
     async(params:MemberQueryParams, {rejectWithValue})=>{
@@ -70,6 +86,45 @@ export const getAllMembersFeth=createAsyncThunk<any,MemberQueryParams,ThunkApiCo
             const response=await api.memberAuth.getAllMembers(params)
             console.log("resdf",response)
             if(response.success){
+                return response;
+            }else{
+              toast.error(response.response?.data?.message)
+              return rejectWithValue(response.data.message);
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message;
+            return rejectWithValue(errorMessage);
+        }
+    }
+)
+export const logoutMemberFeth=createAsyncThunk<any,void,ThunkApiConfig>(
+    "logoutMemberFeth/logoutMember",
+    async(_, {rejectWithValue})=>{
+        try {
+            const response=await api.memberAuth.memberLogout()
+            console.log("resdf",response)
+            if(response.success){
+                toast.success(response.message)
+                return response;
+            }else{
+              toast.error(response.response?.data?.message)
+              return rejectWithValue(response.data.message);
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message;
+            return rejectWithValue(errorMessage);
+        }
+    }
+)
+
+export const checkInMemberByQRfeth=createAsyncThunk<any,string,ThunkApiConfig>(
+    "checkInMemberByQRfeth/checkInMemberByQR",
+    async(qrData:string, {rejectWithValue})=>{
+        try {
+            const response=await api.memberAuth.checkInMemberByQR(qrData)
+            console.log("resdf",response)
+            if(response.success){
+                toast.success(response.message)
                 return response;
             }else{
               toast.error(response.response?.data?.message)

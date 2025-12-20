@@ -179,7 +179,7 @@ const OwnerDashboard = () => {
             />
             <StatCard 
               title="Today's Check-ins" 
-              value="45" 
+              value={owner ? owner?.totalCheckInsToday : isLoading ? '' : '--' } 
               change="Real-time updates" 
               icon={QrCode} 
               iconColor="bg-green-500/20" 
