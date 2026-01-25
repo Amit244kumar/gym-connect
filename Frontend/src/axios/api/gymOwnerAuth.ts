@@ -1,4 +1,4 @@
-import { RegisterResponse,ApiResponse,RegisterUserData,LoginResponse,LoginCredentials, GymOwner, ProfileUpdateData } from "@/type/gymOwnerTypes";
+import { RegisterResponse,ApiResponse,RegisterUserData,LoginResponse,LoginCredentials, GymOwner, ProfileUpdateData, checkInStats } from "@/type/gymOwnerTypes";
 import { AxiosInstance } from "axios";
 const baseURL:string="/api/gymOnwerAuth"
 
@@ -88,6 +88,14 @@ const gymOnwerAuth=(instance:AxiosInstance)=>({
     updateGymOwnerProfile:async(profileData:ProfileUpdateData)=>{
         try {
             const {data}=await instance.put<ApiResponse<GymOwner>>(`${baseURL}/update-profile`,profileData)
+            return data
+        } catch (error) {
+            return error;
+        }
+    },
+    getCheckInStats:async()=>{
+        try {
+            const {data}=await instance.get<ApiResponse<checkInStats>>(`${baseURL}/checkins`)
             return data
         } catch (error) {
             return error;

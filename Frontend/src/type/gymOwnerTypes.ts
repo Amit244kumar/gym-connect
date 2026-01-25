@@ -29,7 +29,7 @@ export interface GymOwner {
     recentMembers?: memeber
 }
 
-export interface GymOwnerAuthState {
+export interface GymOwnerAuthState<t=any> {
     token: string | null;
     owner: GymOwner;
     isAuthenticated: boolean;
@@ -37,6 +37,8 @@ export interface GymOwnerAuthState {
     slug: string;
     isGymNameAvailable: boolean;
     isVerifyingToken: boolean;
+    checkInStats: t;
+    memberDistribution?: { name: string; value: number; color: string }[];
 }
 
 export interface CredentialsPayload {
@@ -81,7 +83,32 @@ export interface ApiResponse<T = any> {
     data?: T;
 }
 
-
+export interface checkInStats {
+    totalCheckIns: number;
+    successfulCheckIns: number;
+    failedCheckIns: number;
+    checkIns:[checkIn]
+    totalRecords: number;
+    totalPages: number;
+    currentPage: number;
+}
+interface checkIn{
+    id:number;
+    memberId:number;
+    ownerId:number;
+    checkInStatus:string;
+    createdAt:string;
+    updatedAt:string;
+    member:members
+} 
+export interface members {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    memberPhoto?: string;
+    checkInDate: string;
+}
 export interface LoginResponse {
     token: string;
 }

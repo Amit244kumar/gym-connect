@@ -119,7 +119,6 @@ export const registerGymOwner = async (req, res) => {
   }
 };
 
-
 export const isGymNameUnique = async (req, res) => {
   try {
     const { gymName } = req.params;
@@ -242,9 +241,16 @@ export const getProfile = async (req, res) => {
   try {
     const ownerId = req.user.id;
     const owner = await GymOwner.findByPk(ownerId, {
-      attributes: { exclude: ['password'] }
+      attributes: { exclude: ['password'] },
+      include:[
+        {
+          model:OwnerMembershipPlan,
+          attributes:["id","planName"]
+        }
+      ]
     });
-
+    
+    console.log("Ownersdfsd",owner.dataValues.OwnerMembershipPlans[0].id)
     if (!owner) {
       return res.status(404).json({
         success: false,
@@ -253,7 +259,10 @@ export const getProfile = async (req, res) => {
     }
 
     const members = await Member.count({
-      where: { ownerId }
+      where: { ownerId },
+      include:{
+        model:OwnerMembershipPlan
+      },
     });
     const recentMembers = await Member.findAll({
       where: { ownerId },
@@ -265,20 +274,28 @@ export const getProfile = async (req, res) => {
         attributes:["planName"]
       },
     });
-    console.log("sdfsdd",recentMembers)
+    // console.log("sdfsdd",recentMembers)
      recentMembers.forEach(member => {
       if(member.membershipEndDate){
         const endDate = new Date(member.membershipEndDate);
         const today = new Date();
-    console.log("sdfqwaqsdd",member)
+        console.log("sdfqwaqsdd",member)
         
         const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
-        console.log("dayssdfLeft",daysLeft)
-        member.dataValues.membershipExpireInDays=daysLeft;  
+        console.log("daysLefteqeqqqq",Number(daysLeft)<=0)
+        if(Number(daysLeft)<=0){
+          console.log("daysLeft",daysLeft)
+          member.dataValues.membershipExpireInDays=0;  
+          member.dataValues.membershipStatus='expired';
+          member.save();
+        }else{
+          console.log("dayssdfLeft",daysLeft)
+          member.dataValues.membershipExpireInDays=daysLeft;  
+        }
       }
       console.log("membesdsdr",member)
     });
-
+    
     console.log("Members Count",members)
     // Calculate trial days information
     const trialStart = new Date(owner.trialStart);
@@ -299,7 +316,32 @@ export const getProfile = async (req, res) => {
         }
       }
     });
-    console.log("Today's Check-Ins",totalCheckInsToday)    
+
+    // Get check-in distribution by hour for today
+    const checkInData = await getCheckInDistribution(ownerId);
+ 
+    let memberDistribution = [];
+    const colorPalette = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+    if (owner.dataValues.OwnerMembershipPlans) {
+        // Create promises array from the map operation
+        const promises = owner.dataValues.OwnerMembershipPlans.map(async (plan,index) => {
+            const count = await Member.count({
+                where: {
+                    ownerId,
+                    membershipType: plan.id
+                }
+            });
+            const color = colorPalette[index % colorPalette.length];
+            return {
+                name: plan.planName,
+                value: count,
+                color:color
+            };
+        });
+
+        // Wait for all promises
+        memberDistribution = await Promise.all(promises);
+    }
     res.json({
       success: true,
       message: 'Profile fetched successfully',
@@ -307,6 +349,8 @@ export const getProfile = async (req, res) => {
         totalMembers:members,
         totalCheckInsToday,
         ...owner.dataValues,
+        memberDistribution,
+        checkInData,
         trialInfo: {
           totalTrialDays,
           daysLeft: Math.max(0, daysLeft),
@@ -375,7 +419,7 @@ export const updateProfile = async (req, res) => {
     }
 
     // Update owner data
-    const updateData = { ownerName, gymName };
+    const updateData = { ownerName, gymName ,slug:gymName.toLowerCase().replace(/\s+/g, '-')};
     
     if (req.file) {
       updateData.ownerPhoto = `owner/${req.file.filename}`;
@@ -594,69 +638,10 @@ export const resetPassword = async (req, res) => {
     });
   }
 };
-// export const changePassword = async (req, res) => {
-//   try {
-//     const ownerId = req.user.id;
-//     const { currentPassword, newPassword } = req.body;
 
-//     if (!currentPassword || !newPassword) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Current password and new password are required'
-//       });
-//     }
-
-//     if (newPassword.length < 8) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'New password must be at least 8 characters long'
-//       });
-//     }
-
-//     const owner = await GymOwner.findByPk(ownerId, {
-//       attributes: { exclude: [] } // Include password for comparison
-//     });
-
-//     if (!owner) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'Gym owner not found'
-//       });
-//     }
-
-//     // Verify current password
-//     const isCurrentPasswordValid = await owner.comparePassword(currentPassword);
-//     if (!isCurrentPasswordValid) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Current password is incorrect'
-//       });
-//     }
-
-//     // Update password
-//     await owner.update({ password: newPassword });
-
-//     res.json({
-//       success: true,
-//       message: 'Password changed successfully'
-//     });
-
-//   } catch (error) {
-//     console.error('Change password error:', error);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Failed to change password',
-//       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-//     });
-//   }
-// };
-
-// Logout (optional - for session invalidation if needed)
 export const logout = async (req, res) => {
   try {
-    // In JWT-based auth, logout is typically handled client-side
-    // But you can add any cleanup logic here if needed
-
+    
     res.json({
       success: true,
       message: 'Logged out successfully'
@@ -795,3 +780,162 @@ export const refreshToken = async (req, res) => {
     });
   }
 };
+
+
+export const getCheckInStats = async (req, res) => {
+  try {
+    const {page = 1, limit = 10} = req.query;
+    const ownerId = req.user.id;
+    const offset = (page - 1) * limit;
+    const { count, rows: checkIns } = await CheckIn.findAndCountAll({
+      where: { 
+        ownerId ,
+        createdAt:{
+          [Op.gte]:new Date(new Date().setHours(0,0,0,0)),
+          [Op.lte]:new Date(new Date().setHours(23,59,59,999))
+        }
+      },
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      include: {
+        model: Member,
+        as: 'member',
+        attributes: ['id', 'name', 'email', 'phone', 'memberPhoto']
+      },
+    });
+    const success=checkIns.filter((checkIn)=>checkIn.checkInStatus==="success")
+    const failed=checkIns.filter((checkIn)=>checkIn.checkInStatus==="failed")
+    console.log("Check-Ins",failed)
+    res.json({
+      success: true,
+      message: 'Check-in stats fetched successfully',
+      data: {
+        totalCheckIns: count,
+        successfulCheckIns: success.length,
+        failedCheckIns: failed.length,
+        checkIns,
+        totalRecords: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: parseInt(page),
+      }
+    });
+  } catch (error) {
+    console.error('Get check-in stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get check-in stats',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+
+// Helper function to get check-in distribution by hour
+async function getCheckInDistribution(ownerId) {
+  try {
+    // Define time slots (2-hour intervals)
+    const timeSlots = [
+      { start: 6, end: 8, label: '6 AM' },
+      { start: 8, end: 10, label: '8 AM' },
+      { start: 10, end: 12, label: '10 AM' },
+      { start: 12, end: 14, label: '12 PM' },
+      { start: 14, end: 16, label: '2 PM' },
+      { start: 16, end: 18, label: '4 PM' },
+      { start: 18, end: 20, label: '6 PM' },
+      { start: 20, end: 22, label: '8 PM' },
+      { start: 22, end: 24, label: '10 PM' }, // Optional: 10 PM slot
+      { start: 0, end: 6, label: '12 AM' }   // Optional: Midnight to 6 AM slot
+    ];
+
+    // Get today's start and end
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Get all check-ins for today
+    const checkIns = await CheckIn.findAll({
+      where: {
+        ownerId,
+        createdAt: {
+          [Op.gte]: todayStart,
+          [Op.lte]: todayEnd
+        }
+      },
+      attributes: ['createdAt']
+    });
+
+    // Initialize result array with 0 counts
+    const result = timeSlots.map(slot => ({
+      time: slot.label,
+      count: 0
+    }));
+
+    // Count check-ins for each time slot
+    checkIns.forEach(checkIn => {
+      const hour = checkIn.createdAt.getHours();
+      
+      // Find which time slot this hour belongs to
+      for (let i = 0; i < timeSlots.length; i++) {
+        if (hour >= timeSlots[i].start && hour < timeSlots[i].end) {
+          result[i].count++;
+          break;
+        }
+      }
+    });
+
+    return result;
+
+  } catch (error) {
+    console.error('Error getting check-in distribution:', error);
+    // Return default structure if there's an error
+    return [
+      { time: '6 AM', count: 0 },
+      { time: '8 AM', count: 0 },
+      { time: '10 AM', count: 0 },
+      { time: '12 PM', count: 0 },
+      { time: '2 PM', count: 0 },
+      { time: '4 PM', count: 0 },
+      { time: '6 PM', count: 0 },
+      { time: '8 PM', count: 0 }
+    ];
+  }
+}
+
+// // Alternative: If you want to get check-in data for the last 7 days
+// async function getCheckInDistributionLast7Days(ownerId) {
+//   try {
+//     const days = [];
+//     for (let i = 6; i >= 0; i--) {
+//       const date = new Date();
+//       date.setDate(date.getDate() - i);
+      
+//       const dayStart = new Date(date);
+//       dayStart.setHours(0, 0, 0, 0);
+      
+//       const dayEnd = new Date(date);
+//       dayEnd.setHours(23, 59, 59, 999);
+
+//       const count = await CheckIn.count({
+//         where: {
+//           ownerId,
+//           createdAt: {
+//             [Op.gte]: dayStart,
+//             [Op.lte]: dayEnd
+//           }
+//         }
+//       });
+
+//       days.push({
+//         date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+//         count: count
+//       });
+//     }
+
+//     return days;
+//   } catch (error) {
+//     console.error('Error getting 7-day check-in distribution:', error);
+//     return [];
+//   }
+// }

@@ -12,7 +12,9 @@ import {
 } from "lucide-react";
 import QRScanner from "./QRScanner";
 import { useState } from "react";
-
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
+import formatLastVisit, { formatDate } from "@/components/utils/helper";
 interface DashboardContextType {
   scanResult: string | null;
   onScanQR: () => void;
@@ -21,7 +23,7 @@ interface DashboardContextType {
 export default function MemberDashboard() {
   // const { scanResult, onScanQR } = useOutletContext<DashboardContextType>();
   const [showScanner, setShowScanner] = useState(false);
-  
+  const {isLoading,memberProfile}=useSelector((state:RootState)=>state.memberAuth)
   const handleScanSuccess = (result: string) => {
     console.log("Scanned QR Code:", result);
     setShowScanner(false);
@@ -33,6 +35,13 @@ export default function MemberDashboard() {
   const onScanQR = () => {
     setShowScanner(true);
   };
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
   return (
     <>
       {/* Quick Stats */}
@@ -46,9 +55,9 @@ export default function MemberDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold text-white">
-              Premium Monthly
+             {memberProfile?.membershipStatus}
             </div>
-            <p className="text-xs text-slate-400">Expires: March 15, 2024</p>
+            <p className="text-xs text-slate-400">Expire in {formatDate(memberProfile?.membershipEndDate)}</p>
           </CardContent>
         </Card>
 
@@ -60,8 +69,8 @@ export default function MemberDashboard() {
             <Clock className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold text-white">18 Visits</div>
-            <p className="text-xs text-slate-400">Last visit: Today</p>
+            <div className="text-lg font-bold text-white">{memberProfile.visitCount} Visits</div>
+            <p className="text-xs text-slate-400">Last visit: {formatLastVisit(memberProfile?.lastVisit)}</p>
           </CardContent>
         </Card>
 
@@ -89,7 +98,7 @@ export default function MemberDashboard() {
           QR Code Scanned Successfully: <strong>{scanResult}</strong>
         </div>
       )} */}
-
+{/* 
       <div className="text-center py-20">
         <div className="max-w-md mx-auto">
           <div className="w-24 h-24 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -110,7 +119,7 @@ export default function MemberDashboard() {
             <br />• Visit history and workout tracking
           </p>
         </div>
-      </div>
+      </div> */}
       {showScanner && (
         <QRScanner
           onScanSuccess={handleScanSuccess}

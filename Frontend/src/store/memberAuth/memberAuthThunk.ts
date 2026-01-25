@@ -28,7 +28,7 @@ export const loginMemberFeth=createAsyncThunk<any,memberlogin,ThunkApiConfig>(
     async(memberData:memberlogin, {rejectWithValue})=>{
         try {
             const response=await api.memberAuth.loginMember(memberData)
-            console.log("resdf",response)
+            
             if(response.success){
                 toast.success(response.message)
                 return response.data;
@@ -48,7 +48,7 @@ export const getMemberByIdFeth=createAsyncThunk<any,string,ThunkApiConfig>(
     async(memberId:string, {rejectWithValue})=>{
         try {
             const response=await api.memberAuth.getMemberById(memberId)
-            console.log("resdf",response)
+            
             if(response.success){
                 return response;
             }else{
@@ -66,7 +66,7 @@ export const getMemberProfileFeth=createAsyncThunk<any,void,ThunkApiConfig>(
     async(_, {rejectWithValue})=>{
         try {
             const response=await api.memberAuth.getMemberProfile()
-            console.log("resdf",response)
+            
             if(response.success){
                 return response.data;
             }else{
@@ -84,7 +84,7 @@ export const getAllMembersFeth=createAsyncThunk<any,MemberQueryParams,ThunkApiCo
     async(params:MemberQueryParams, {rejectWithValue})=>{
         try {
             const response=await api.memberAuth.getAllMembers(params)
-            console.log("resdf",response)
+            
             if(response.success){
                 return response;
             }else{
@@ -102,7 +102,7 @@ export const logoutMemberFeth=createAsyncThunk<any,void,ThunkApiConfig>(
     async(_, {rejectWithValue})=>{
         try {
             const response=await api.memberAuth.memberLogout()
-            console.log("resdf",response)
+            
             if(response.success){
                 toast.success(response.message)
                 return response;
@@ -122,7 +122,6 @@ export const checkInMemberByQRfeth=createAsyncThunk<any,string,ThunkApiConfig>(
     async(qrData:string, {rejectWithValue})=>{
         try {
             const response=await api.memberAuth.checkInMemberByQR(qrData)
-            console.log("resdf",response)
             if(response.success){
                 toast.success(response.message)
                 return response;

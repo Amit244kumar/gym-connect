@@ -22,6 +22,7 @@ import Help from './owner/Help';
 import MemberCheckIn from './owner/memberCheckIn';
 import MemberLayout from '@/components/layout/MemberLayout';
 import MemberProfile from './member/MyProfile';
+import Attendance from './member/Attendance';
   export const AppRouters=()=>{
       const router=createBrowserRouter(
         createRoutesFromElements(
@@ -47,19 +48,19 @@ import MemberProfile from './member/MyProfile';
                   <Route path="/owner/members" element={<Members />} />
                   <Route path="/owner/members/checkin" element={<CheckIn />} />
                   <Route path="/owner/membershipPlan" element={<MembershipPlan />} />
-                  <Route path="/owner/reports" element={<Reports />} />
-                  <Route path="/owner/notifications" element={<Notifications />} />
+                  {/* <Route path="/owner/reports" element={<Reports />} />
+                  <Route path="/owner/notifications" element={<Notifications />} /> */}
                   {/* <Route path="/owner/members/checkout" element={<MemberCheckIn />} /> */}
-                  <Route path="/owner/messages" element={<Messages />} />
+                  {/* <Route path="/owner/messages" element={<Messages />} />
                   <Route path="/owner/settings" element={<Settings />} />
-                  <Route path="/owner/help" element={<Help />} />
-                  <Route path="/owner/profile/:gymName" element={<Profile />} />
+                  <Route path="/owner/help" element={<Help />} />*/}
+                  <Route path="/owner/profile/:gymName" element={<Profile />} /> 
                 </Route>
                  <Route element={<MemberLayout />}>
                     <Route path="/member/dashboard" element={<MemberDashboard />} />
-                    <Route path="/member/profile" element={<MemberProfile memberId={""} />} />
-                    {/*<Route path="/member/membership" element={<MemberMembership />} />
-                    <Route path="/member/attendance" element={<MemberAttendance />} />
+                    <Route path="/member/profile" element={<MemberProfile />} />
+                    <Route path="/member/attendance" element={<Attendance />} />
+                    {/*<<Route path="/member/attendance" element={<MemberAttendance />} />
                     <Route path="/member/progress" element={<MemberProgress />} />
                     <Route path="/member/messages" element={<MemberMessages />} />
                     <Route path="/member/settings" element={<MemberSettings />} />

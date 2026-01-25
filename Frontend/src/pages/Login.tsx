@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
-import { Dumbbell, User, Building2, ArrowLeft } from "lucide-react";
+import { Dumbbell, User, Building2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import  * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -25,12 +25,22 @@ import { LoginCredentials } from "@/type/gymOwnerTypes";
 import ForgetPassword from "../components/modals/ForgetPassword";
 import { loginMemberFeth } from "@/store/memberAuth/memberAuthThunk";
 import { memberlogin } from "@/type/memberTypes"; 
+
 type MemberLoginForm = yup.InferType<typeof memberLoginSchema>;
 type OwnerLoginForm = yup.InferType<typeof ownerLoginSchema>;
 
 export default function Login() {
   const dispatch = useDispatch<AppDispatch>()
   const navigate=useNavigate()
+  
+  // Create refs for password inputs
+  const memberPasswordRef = useRef<HTMLInputElement>(null);
+  const ownerPasswordRef = useRef<HTMLInputElement>(null);
+  
+  // State for password visibility
+  const [showMemberPassword, setShowMemberPassword] = useState(false);
+  const [showOwnerPassword, setShowOwnerPassword] = useState(false);
+  
   // State for ForgetPassword modal
   const [showForgetPassword, setShowForgetPassword] = useState(false);
   
@@ -89,6 +99,20 @@ export default function Login() {
       // Error is already handled in the thunk with toast notifications
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const toggleMemberPasswordVisibility = () => {
+    setShowMemberPassword(!showMemberPassword);
+    if (memberPasswordRef.current) {
+      memberPasswordRef.current.type = showMemberPassword ? "password" : "text";
+    }
+  };
+
+  const toggleOwnerPasswordVisibility = () => {
+    setShowOwnerPassword(!showOwnerPassword);
+    if (ownerPasswordRef.current) {
+      ownerPasswordRef.current.type = showOwnerPassword ? "password" : "text";
     }
   };
 
@@ -166,17 +190,26 @@ export default function Login() {
                       </p>
                     )}
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label htmlFor="member-password" className="text-slate-300">
                       Password
                     </Label>
                     <Input
                       id="member-password"
-                      type="password"
+                      type={showMemberPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      {...registerMember("password")}
-                      className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-orange-500"
+                      {...registerMember("password", { 
+                        ref: memberPasswordRef 
+                      })}
+                      className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-orange-500 pr-10"
                     />
+                    <button
+                      type="button"
+                      onClick={toggleMemberPasswordVisibility}
+                      className="absolute right-3 top-[2.4rem] transform -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      {showMemberPassword ? <EyeOff className="h-5 w-5 mt-3" /> : <Eye className="h-5 w-5 mt-3" />}
+                    </button>
                     {memberErrors.password && (
                       <p className="text-red-400 text-sm mt-1">
                         {memberErrors.password.message}
@@ -184,10 +217,11 @@ export default function Login() {
                     )}
                   </div>
                   <Button
+                    disabled={isSubmitting}
                     type="submit"
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                    className={`w-full bg-orange-500 hover:bg-orange-600  text-white ${ isSubmitting && 'bg-orange-300' } `}
                   >
-                    Sign In as Member
+                    {isSubmitting ?'Signing In' :'Sign In as Member'}
                   </Button>
                 </form>
                 <div className="mt-4 text-center">
@@ -223,17 +257,26 @@ export default function Login() {
                       </p>
                     )}
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label htmlFor="owner-password" className="text-slate-300">
                       Password
                     </Label>
                     <Input
                       id="owner-password"
-                      type="password"
+                      type={showOwnerPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      {...registerOwner("password")}
-                      className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-orange-500"
+                      {...registerOwner("password", { 
+                        ref: ownerPasswordRef 
+                      })}
+                      className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-orange-500 pr-10"
                     />
+                    <button
+                      type="button"
+                      onClick={toggleOwnerPasswordVisibility}
+                      className="absolute right-3 top-[2.4rem] transform -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      {showOwnerPassword ? <EyeOff className="h-5 w-5 mt-3" /> : <Eye className="h-5 w-5 mt-3" />}
+                    </button>
                     {ownerErrors.password && (
                       <p className="text-red-400 text-sm mt-1">
                         {ownerErrors.password.message}

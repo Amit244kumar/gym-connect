@@ -1,6 +1,8 @@
 import {OwnerMembershipPlan} from "../models/OwnerMembershipPlan.js";
 import {MembershipPlanFeature} from "../models/MembershipPlanFeature.js";
 import { validationResult } from "express-validator";
+import Member from "../models/member.js";
+import sequelize from "../config/database.js";
 const createMembershipPlan = async (req, res) => {
     try {
         // Validate input
@@ -90,24 +92,51 @@ const updateMembershipPlan = async (req, res) => {
 
 }
 const getMembershipPlans = async (req, res) => {
-    try {
-        const {id:ownerId} = req.user;
-        const plans = await OwnerMembershipPlan.findAll({
-            where: { ownerId },
-            include: [{ model: MembershipPlanFeature, as: 'features' }]
-        });
-        return res.status(200).json({
-            success: true,
-            data: plans
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Server Error',
-            error: error.message
-        });
-    }
-}
+  try {
+    const { id: ownerId } = req.user;
+
+    const plans = await OwnerMembershipPlan.findAll({
+      where: { ownerId },
+      include: [{ model: MembershipPlanFeature, as: 'features' }]
+    });
+
+    const plansId = plans.map(plan => plan.id);
+
+    const totalMembersPerPlan = await Member.findAll({
+      where: { membershipType: plansId },
+      attributes: [
+        'membershipType',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'totalMembers']
+      ],
+      group: ['membershipType']
+    });
+
+    // Convert Sequelize objects → Normal JS
+    const counts = totalMembersPerPlan.map(item => ({
+      membershipType: item.membershipType,
+      total: Number(item.get('totalMembers'))
+    }));
+
+    // Attach count to each plan
+    plans.forEach(plan => {
+      const found = counts.find(c => c.membershipType === plan.id);
+      plan.dataValues.totalMembers = found ? found.total : 0;
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: plans
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message
+    });
+  }
+};
+
+
 const disableMembershipPlan = async (req, res) => {
     try {
         const {id:ownerId} = req.user;

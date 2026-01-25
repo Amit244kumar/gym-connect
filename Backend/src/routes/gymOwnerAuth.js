@@ -11,7 +11,8 @@ import {
   resetPassword,
   verifyResetToken,
   verifyEmail,
-  resendEmailVerification
+  resendEmailVerification,
+  getCheckInStats
 } from '../controller/gymOwnerAuth.js';
 import {uploadOwner} from '../helper/uploadImage.js';
 import {
@@ -86,7 +87,7 @@ router.post('/resend-Email-Verification',ownerAuthMiddleware,resendEmailVerifica
 // POST /api/gym-owner/verify-email
 // Verify email address
 router.post('/verify-email',ownerAuthMiddleware,verifyEmail);
-
+router.get('/checkins', ownerAuthMiddleware, getCheckInStats);
 
 // POST /api/gym-owner/verify-phone
 // Verify phone number

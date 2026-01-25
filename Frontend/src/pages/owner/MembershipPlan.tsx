@@ -207,7 +207,7 @@ const MembershipPlan = () => {
                     {/* Note: You'll need to add members count to your API or calculate it separately */}
                     <div className="text-sm text-slate-400">
                       <Users className="inline h-4 w-4 mr-1" />
-                      {/* {plan.members || 0} members */} 0 members
+                       {plan.totalMembers }  members
                     </div>
                     
                     <div className="flex space-x-2">
@@ -227,7 +227,7 @@ const MembershipPlan = () => {
                       >
                         {plan.isActive ? "Disable" : "Enable"}
                       </Button>
-                      <Button 
+                      {/* <Button 
                         size="sm" 
                         disabled={isPlanDeleted}
                         onClick={() => handleDeletePlan(plan.id)}
@@ -235,7 +235,7 @@ const MembershipPlan = () => {
                       >
                         Delete
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </CardContent>
                 </Card>

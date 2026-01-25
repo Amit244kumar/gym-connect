@@ -83,22 +83,9 @@ const OwnerDashboard = () => {
       console.log("No recent members data found or invalid format");
     }
     
-    setCheckInData([
-      { time: '6 AM', count: 12 },
-      { time: '8 AM', count: 35 },
-      { time: '10 AM', count: 28 },
-      { time: '12 PM', count: 15 },
-      { time: '2 PM', count: 20 },
-      { time: '4 PM', count: 32 },
-      { time: '6 PM', count: 45 },
-      { time: '8 PM', count: 18 },
-    ]);
+    setCheckInData(owner?.checkInData || []);
     
-    setMembershipData([
-      { name: 'Basic', value: 45, color: '#3b82f6' },
-      { name: 'Standard', value: 30, color: '#8b5cf6' },
-      { name: 'Premium', value: 25, color: '#ec4899' },
-    ]);
+    setMembershipData(owner?.memberDistribution || []);
   }, [owner]);
 
   // useEffect(() => {
@@ -165,6 +152,13 @@ const OwnerDashboard = () => {
   };
   console.log("Ownesdfsda",owner);
   console.log("fsqwwrxv",recentMembers)
+  if (isLoading) {  
+      return (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        </div>
+      );
+    }
   return (
     <>
         <div className="space-y-6">

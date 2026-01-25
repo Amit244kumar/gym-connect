@@ -21,7 +21,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/index";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
-import {  logoutGymOwnerFeth,getProfilefeth, verifyEmailFeth } from "@/store/gymOwnerAuth/gymOwnerAuthThunks";
+import { logoutGymOwnerFeth, getProfilefeth, verifyEmailFeth } from "@/store/gymOwnerAuth/gymOwnerAuthThunks";
 import { cn } from "@/lib/utils";
 import AddMemberModal from "../modals/AddMemberModal";
 import { config } from "@/axios/config";
@@ -29,18 +29,18 @@ import EmailVerificationModal from "../modals/EmailVerificationModal";
 import { toast } from "sonner";
 import { getFullImageUrl } from "../utils/helper";
 import PhoneVerificationModal from "../modals/PhoneVerificationModal";
+import { getMemberProfileFeth } from "@/store/memberAuth/memberAuthThunk";
+
 const MainLayout = () => {
   const dispatch = useDispatch<AppDispatch>()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const { owner,token,isLoading } = useSelector((state: RootState) => state.gymOwnerAuth);
+  const { owner, token, isLoading } = useSelector((state: RootState) => state.gymOwnerAuth);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
-  // const dropdownRef = useRef<HTMLDivElement>(null);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [logout,setLogout]=useState(false);
+  const [logout, setLogout] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const slug=localStorage.getItem("gymOwnerSlug")
+  const slug = localStorage.getItem("gymOwnerSlug")
 
   // Close sidebar when route changes on mobile
   useEffect(() => {
@@ -49,28 +49,33 @@ const MainLayout = () => {
     }
   }, [location.pathname]);
 
-  
   useEffect(() => {
-      const fetchProfile = async () => {
-        if (token) {
-          try {
-            const response = await dispatch(getProfilefeth()).unwrap();
-            console.log("Profile response:", response)
-            setShowVerificationModal(!response.isEmailVerified);
-          } catch (error) {
-            console.error("Error fetching profile:", error);
-            // navigate('/login');
-          }
-        } else {
-          navigate('/login');
+    const fetchProfile = async () => {
+      if (token) {
+        try {
+          const response = await dispatch(getProfilefeth()).unwrap();
+          console.log("Profile response:", response)
+          setShowVerificationModal(!response.isEmailVerified);
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+          // navigate('/login');
         }
+      } else {
+        navigate('/login');
       }
-      fetchProfile()
-    }, []);
+    }
+    fetchProfile()
+  }, []);
+
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isSidebarOpen && window.innerWidth < 768) {
+      const target = event.target as Element;
+      const sidebar = document.querySelector('.sidebar-container');
+      
+      if (isSidebarOpen && window.innerWidth < 768 && 
+          sidebar && !sidebar.contains(target) && 
+          !target.closest('.mobile-menu-button')) {
         setIsSidebarOpen(false);
       }
     };
@@ -92,6 +97,7 @@ const MainLayout = () => {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
   const handleVerification = async (code: string) => {
     try {
       await dispatch(verifyEmailFeth(code)).unwrap();
@@ -100,35 +106,37 @@ const MainLayout = () => {
       toast.error("Invalid verification code. Please try again.");
     }
   };
-  // const toggleProfileDropdown = () => {
-  //   setIsProfileDropdownOpen(!isProfileDropdownOpen);
-  // };
 
-  const handleLogout = async() => {
+  const handleLogout = async () => {
     setLogout(true);
     await dispatch(logoutGymOwnerFeth()).unwrap();
     navigate('/login');
-    window.location.reload(); 
+    window.location.reload();
   };
- 
-
-  // const handleProfileClick = () => {
-  //   navigate('/profile');
-  // };
 
   const menuItems = [
     { name: 'Dashboard', icon: Home, path: `/owner/dashboard/${slug}` },
     { name: 'Members', icon: Users, path: '/owner/members' },
     { name: 'Check-in', icon: QrCode, path: '/owner/members/checkin' },
     { name: 'Membership Plans', icon: CreditCard, path: 'owner/membershipPlan' },
-    { name: 'Reports', icon: BarChart3, path: '/owner/reports' },
-    { name: 'Notifications', icon: Bell, path: '/owner/notifications' },
-    // { name:'member checkout',icon:Activity,path:'/owner/members/checkout'},
-    { name: 'Messages', icon: MessageSquare, path: '/owner/messages' },
-    { name: 'Settings', icon: Settings, path: 'owner/settings' },
-    { name: 'Help & Support', icon: HelpCircle, path: '/Owner/help' },
+    // { name: 'Reports', icon: BarChart3, path: '/owner/reports' },
+    // { name: 'Notifications', icon: Bell, path: '/owner/notifications' },
+    // { name: 'Messages', icon: MessageSquare, path: '/owner/messages' },
+    // { name: 'Settings', icon: Settings, path: 'owner/settings' },
+    // { name: 'Help & Support', icon: HelpCircle, path: '/Owner/help' },
   ];
-
+    useEffect(() => {
+      const fetchProfileData = async () => {
+        try {
+          await dispatch(getMemberProfileFeth()).unwrap();
+        } catch (error) {
+          console.error("Failed to load profile data:", error);
+          toast.error("Network error");
+        }
+      };
+  
+      fetchProfileData();
+    }, []);
   const handleNavigation = (path: string) => {
     navigate(path);
     if (window.innerWidth < 768) {
@@ -206,7 +214,7 @@ const MainLayout = () => {
         {/* Fixed Sidebar */}
         <div
           className={cn(
-            "fixed top-0 left-0 z-50 h-screen w-64 bg-slate-800 border-r border-slate-700 transform transition-transform duration-300 ease-in-out md:translate-x-0 flex flex-col sidebar-scrollbar",
+            "fixed top-0 left-0 z-50 h-screen w-64 bg-slate-800 border-r border-slate-700 transform transition-transform duration-300 ease-in-out md:translate-x-0 flex flex-col sidebar-scrollbar sidebar-container",
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
@@ -216,13 +224,13 @@ const MainLayout = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleSidebar}
+              onClick={() => setIsSidebarOpen(false)}
               className="md:hidden text-slate-400 hover:text-white"
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
-          {/* <img src={getFullImageUrl(owner?.profileImage)} alt="Logo" className="h-12 w-12 mx-auto my-2"/> */}
+
           {/* User Profile Section */}
           <div className="p-4 border-b border-slate-700 flex-shrink-0">
             <div className="flex items-center space-x-3">
@@ -231,7 +239,6 @@ const MainLayout = () => {
                   src={getFullImageUrl(owner.ownerPhoto)}
                   alt="Profile"
                   className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
-                  // crossOrigin="anonymous"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-600">
@@ -242,7 +249,6 @@ const MainLayout = () => {
                 <p className="font-medium text-white truncate max-w-[120px]">{owner?.ownerName || 'Gym Owner'}</p>
                 <p className="text-xs text-slate-400 truncate max-w-[120px]">{owner?.gymName || 'Your Gym'}</p>
               </div>
-              
             </div>
           </div>
 
@@ -284,7 +290,7 @@ const MainLayout = () => {
                 className="flex items-center w-full px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
               >
                 <LogOut className="mr-3 h-5 w-5 flex-shrink-0" />
-                <span className="truncate">{logout?'logging out':'log out'}</span>
+                <span className="truncate">{logout ? 'logging out' : 'log out'}</span>
               </button>
             </div>
           </div>
@@ -294,7 +300,7 @@ const MainLayout = () => {
         {isSidebarOpen && (
           <div
             className="fixed inset-0 bg-black/50 z-40 md:hidden"
-            onClick={toggleSidebar}
+            onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
@@ -302,96 +308,40 @@ const MainLayout = () => {
         <div className="md:ml-64 min-h-screen">
           {/* Fixed Header */}
           <header className="sticky top-0 z-30 bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 p-4">
-            <div className="flex flex-wrap justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div className="flex items-center space-x-4">
                 {/* Mobile Menu Button */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden text-slate-400 hover:text-white"
+                  className="md:hidden text-slate-400 hover:text-white mobile-menu-button"
                   onClick={toggleSidebar}
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
 
                 <div className="flex flex-col">
-                  <h1 className="text-2xl font-bold text-white">Welcome Back to Dashboard</h1>
-                  <p className="text-slate-400 ml-2 hidden sm:inline">
+                  <h1 className="text-xl sm:text-2xl font-bold text-white">Welcome Back to Dashboard</h1>
+                  <p className="text-slate-400 text-sm hidden sm:inline">
                     Here's what's happening with your gym today
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
-                {/* Add Member Button - Mobile only */}
-                <Button size="sm" onClick={handleAddMember} className="md:hidden bg-orange-500 hover:bg-orange-600">
+                {/* Add Member Button */}
+                <Button size="sm" onClick={handleAddMember} className="bg-orange-500 hover:bg-orange-600">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Member
+                  <span className="hidden sm:inline">Add Member</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
-
-                {/* Add Member Button - Desktop */}
-                <Button size="sm" onClick={handleAddMember} className="hidden md:flex bg-orange-500 hover:bg-orange-600">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Member
-                </Button>
-
-                {/* Profile Dropdown */}
-                {/* <div className="relative" ref={dropdownRef}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-full p-0 h-10 w-10 overflow-hidden border-2 border-slate-600"
-                    onClick={toggleProfileDropdown}
-                  >
-                    {owner?.profileImage ? (
-                      <img
-                        src={owner.profileImage}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-slate-700 flex items-center justify-center">
-                        <User className="h-5 w-5 text-slate-300" />
-                      </div>
-                    )}
-                  </Button>
-
-                  {isProfileDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-md shadow-lg z-10">
-                      <div className="py-1">
-                        <button
-                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-slate-700"
-                          onClick={handleProfileClick}
-                        >
-                          <User className="h-4 w-4 mr-2" />
-                          My Profile
-                        </button>
-                        <button
-                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-slate-700"
-                          onClick={() => navigate('/settings')}
-                        >
-                          <Settings className="h-4 w-4 mr-2" />
-                          Settings
-                        </button>
-                        <div className="border-t border-slate-700 my-1"></div>
-                        <button
-                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-slate-700"
-                          onClick={handleLogout}
-                        >
-                          <LogOut className="h-4 w-4 mr-2" />
-                          Log Out
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div> */}
               </div>
             </div>
           </header>
 
           {/* Page Content */}
           <main className="p-6 main-scrollbar overflow-y-auto">
-            <Outlet  />
+            <Outlet />
           </main>
         </div>
       </div>

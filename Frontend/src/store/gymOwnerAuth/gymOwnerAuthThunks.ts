@@ -11,6 +11,7 @@ import {
   ThunkApiConfig,
   RegisterResponse,
   GymOwner,
+  checkInStats,
 } from '../../type/gymOwnerTypes'
 import { toast } from 'sonner';
 
@@ -213,6 +214,22 @@ export const verifyEmailFeth = createAsyncThunk<{ success: boolean; message: str
   }
 );
 
+export const getCheckInStatsFeth = createAsyncThunk<ApiResponse<checkInStats>,void,ThunkApiConfig>(
+  'getCheckInStatsFeth/getCheckInStats',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.gymOnwerAuth.getCheckInStats();
+      if (response.success) {
+        return response;
+      } else {
+        toast.error(response.response?.data?.message)
+        return rejectWithValue(response?.data?.message || 'Failed to fetch check-in stats');
+      }
+    } catch (error: any) {
+      return rejectWithValue(error .response?.data?.message || error.message || 'Failed to fetch check-in stats');
+    }
+  }
+);
 // Update Profile
 export const updateGymOwnerProfileFeth = createAsyncThunk<
 { success: boolean; message: string; data: GymOwner },
@@ -223,7 +240,7 @@ export const updateGymOwnerProfileFeth = createAsyncThunk<
   async (profileData, { rejectWithValue }) => {
     try {
       const response = await api.gymOnwerAuth.updateGymOwnerProfile(profileData);
-
+      console.log("Update profile response:",response)
       if (response.success) {
         toast.success(response.message)
         return response

@@ -82,10 +82,14 @@ export default function QRScanner({ onScanSuccess, onClose }: QRScannerProps) {
         const response = await dispatch(checkInMemberByQRfeth(scannerResult));
         if (checkInMemberByQRfeth.fulfilled.match(response)) {
         // ✅ API SUCCESS 
-        vibrateSuccess();
-        // playSuccessSound();
+          vibrateSuccess(200,100,200);
+         playSuccessSound();
          successAudioRef.current?.play().catch(() => {});
-      }
+        }
+        if (checkInMemberByQRfeth.rejected.match(response)) {
+          vibrateSuccess();
+        }
+
         console.log("Check-in response:", response);
       }
      } catch (error) {

@@ -10,9 +10,10 @@ import {
   resetPasswordFeth,
   verifyEmailFeth,
   resendEmailVerificationFeth,
-  updateGymOwnerProfileFeth
+  updateGymOwnerProfileFeth,
+  getCheckInStatsFeth
 } from "./gymOwnerAuthThunks"
-import {GymOwnerAuthState,CredentialsPayload} from "../../type/gymOwnerTypes"
+import {GymOwnerAuthState,CredentialsPayload, checkInStats} from "../../type/gymOwnerTypes"
 
 
 
@@ -48,7 +49,7 @@ import {GymOwnerAuthState,CredentialsPayload} from "../../type/gymOwnerTypes"
 //   };
 // };
 
-const initialState: GymOwnerAuthState = {
+const initialState: GymOwnerAuthState<checkInStats> = {
     token:localStorage.getItem("gymOwnerToken")|| null,
     owner: null,
     isAuthenticated: !!localStorage.getItem('isAuthenticated') || false,
@@ -56,6 +57,7 @@ const initialState: GymOwnerAuthState = {
     slug:"",
     isGymNameAvailable: false,
     isVerifyingToken:false,
+    checkInStats: null,
 };
 
 const gymOwnerAuthSlice = createSlice({
@@ -183,6 +185,18 @@ const gymOwnerAuthSlice = createSlice({
       .addCase(updateGymOwnerProfileFeth.rejected, (state, action) => {
         state.isLoading = false;
       })
+      .addCase(getCheckInStatsFeth.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getCheckInStatsFeth.fulfilled, (state,action) => {
+        state.isLoading = false;
+        console.log("Check-In Stats:",action.payload.data)
+        state.checkInStats=action.payload?.data
+        // You can store check-in stats in the state if needed
+      })
+      .addCase(getCheckInStatsFeth.rejected, (state, action) => {
+        state.isLoading = false;
+      });
 
     // // Change Password
     //   .addCase('gymOwnerAuth/changePassword/pending', (state) => {

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatTime, getFullImageUrl } from "@/components/utils/helper";
 import {
   QrCode,
   Users,
@@ -14,12 +15,15 @@ import {
   XCircle,
   Plus,
   Download,
+  User,
 } from "lucide-react";
 import MainLayout from "../../components/layout/MainLayout";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/index";
+import { useSelector, useDispatch } from "react-redux";
+import { getCheckInStatsFeth } from "@/store/gymOwnerAuth/gymOwnerAuthThunks";
+import { TableCell } from "@/components/ui/table";
 
 interface CheckIn {
   id: number;
@@ -44,16 +48,17 @@ interface CheckInPageProps {
 }
 
 const CheckIn = ({ mode = "list" }: CheckInPageProps) => {
-  const [todayCheckIns, setTodayCheckIns] = useState<CheckIn[]>([]);
-  const [recentCheckIns, setRecentCheckIns] = useState<CheckIn[]>([]);
+  // const [todayCheckIns, setTodayCheckIns] = useState<CheckIn[]>([]);
+  // const [recentCheckIns, setRecentCheckIns] = useState<CheckIn[]>([]);
   const [qrCodeValue, setQrCodeValue] = useState<string>("");
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
   const [selectedQR, setSelectedQR] = useState<QRCodeData | null>(null);
   const [qrCodeImage, setQrCodeImage] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { owner, isLoading } = useSelector((state: RootState) => state.gymOwnerAuth);
-
+  const { owner, isLoading,checkInStats } = useSelector((state: RootState) => state.gymOwnerAuth);
+  console.log("Check-In Stats from Store:",checkInStats);
+  const dispatch = useDispatch<AppDispatch>();
   const generateQRCodeImage = async (id: string) => {
     try {
       setIsGenerating(true);
@@ -107,6 +112,14 @@ const CheckIn = ({ mode = "list" }: CheckInPageProps) => {
     
     generateQR();
   }, [owner]);
+  useEffect(() => {
+    // Fetch today's check-ins
+        const fetchTodayCheckIns = async () => {
+          dispatch(getCheckInStatsFeth()).unwrap();
+        };
+        fetchTodayCheckIns();    
+      }
+  , []);
 
   // Force regeneration when component becomes visible
   useEffect(() => {
@@ -156,7 +169,13 @@ const CheckIn = ({ mode = "list" }: CheckInPageProps) => {
         return <Clock className="h-4 w-4 text-gray-400" />;
     }
   };
-
+  if (isLoading) {
+      return (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        </div>
+      );
+  }
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -176,7 +195,7 @@ const CheckIn = ({ mode = "list" }: CheckInPageProps) => {
             <QrCode className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{todayCheckIns.length}</div>
+            <div className="text-2xl font-bold text-white">{checkInStats?.checkIns?.length}</div>
             <p className="text-xs text-slate-400">Real-time updates</p>
           </CardContent>
         </Card>
@@ -189,10 +208,10 @@ const CheckIn = ({ mode = "list" }: CheckInPageProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {todayCheckIns.filter(c => c.status === 'success').length}
+              {checkInStats?.successfulCheckIns}
             </div>
             <p className="text-xs text-slate-400">
-              {todayCheckIns.length > 0 ? Math.round((todayCheckIns.filter(c => c.status === 'success').length / todayCheckIns.length) * 100) : 0}% success rate
+              {checkInStats?.totalCheckIns ? Math.round((checkInStats?.successfulCheckIns / checkInStats?.totalCheckIns) * 100) : 0}% success rate
             </p>
           </CardContent>
         </Card>
@@ -205,7 +224,7 @@ const CheckIn = ({ mode = "list" }: CheckInPageProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {todayCheckIns.filter(c => c.status === 'failed').length}
+              {checkInStats?.failedCheckIns}
             </div>
             <p className="text-xs text-slate-400">Need attention</p>
           </CardContent>
@@ -215,7 +234,7 @@ const CheckIn = ({ mode = "list" }: CheckInPageProps) => {
       <Tabs defaultValue="today" className="space-y-6">
         <TabsList className="bg-slate-800/50 border-slate-700">
           <TabsTrigger value="today" className="text-slate-300 hover:text-white">Today's Check-in</TabsTrigger>
-          <TabsTrigger value="recent" className="text-slate-300 hover:text-white">Recent Activity</TabsTrigger>
+          {/* <TabsTrigger value="recent" className="text-slate-300 hover:text-white">Recent Activity</TabsTrigger> */}
           <TabsTrigger value="qr" className="text-slate-300 hover:text-white">QR Codes</TabsTrigger>
         </TabsList>
 
@@ -226,22 +245,34 @@ const CheckIn = ({ mode = "list" }: CheckInPageProps) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {todayCheckIns.length > 0 ? (
-                  todayCheckIns.map((checkIn) => (
+                {checkInStats?.checkIns.length > 0 ? (
+                  checkInStats.checkIns.map((checkIn) => (
                     <div key={checkIn.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-700/50">
                       <div className="flex items-center space-x-3">
-                        <div className="p-2 rounded-full bg-slate-600">
-                          {getStatusIcon(checkIn.status)}
+                        <div className=" rounded-full bg-slate-600">
+                          {/* {getStatusIcon(checkIn?.checkInStatus)} */}
+                            {checkIn?.member?.memberPhoto ? (
+                              <img
+                                src={getFullImageUrl(checkIn?.member?.memberPhoto)}
+                                alt="Profile"
+                                className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
+                                // crossOrigin="anonymous"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-600">
+                                <User className="h-5 w-5 text-slate-300" />
+                              </div>
+                            )}
                         </div>
                         <div>
-                          <p className="font-medium text-white">{checkIn.memberName}</p>
-                          <p className="text-xs text-slate-400">ID: {checkIn.memberId}</p>
+                          <p className="font-medium text-white">{checkIn?.member?.name}</p>
+                          <p className="text-xs text-slate-400">ID: {checkIn?.member?.id}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-white">{checkIn.time}</p>
+                        <p className="text-sm font-medium text-white">{formatTime(checkIn.createdAt)}</p>
                         <div className="flex justify-end">
-                          {getStatusBadge(checkIn.status)}
+                          {getStatusBadge(checkIn.checkInStatus)}
                         </div>
                       </div>
                     </div>
@@ -253,7 +284,7 @@ const CheckIn = ({ mode = "list" }: CheckInPageProps) => {
             </CardContent>
           </Card>
         </TabsContent>
-
+{/* 
         <TabsContent value="recent">
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader>
@@ -287,7 +318,7 @@ const CheckIn = ({ mode = "list" }: CheckInPageProps) => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="qr">
           <Card className="bg-slate-800/50 border-slate-700">

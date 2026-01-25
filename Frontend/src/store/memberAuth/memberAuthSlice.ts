@@ -9,7 +9,8 @@ const initialState:memberAuthState={
     isAuthenticated:!!localStorage.getItem('isAuthenticated') || false,
     isLoading:false,
     isAdded:false,
-    memberProfile:{}
+    memberProfile:{},
+    totalMembers:0
 }
 
 const memberAuthSlice=createSlice({
@@ -41,6 +42,7 @@ const memberAuthSlice=createSlice({
             state.isLoading=false
             console.log("actiofsdf",action.payload)
             state.memberData=action.payload?.data?.members
+            state.totalMembers=action.payload?.data?.totalMembers
         })
         .addCase(getAllMembersFeth.rejected,(state,action)=>{
             state.isLoading=false

@@ -2,9 +2,9 @@ import jwt from 'jsonwebtoken';
 import GymOwner from '../models/gymOwner.js';
 import Member from '../models/member.js';
 
-const ownerownerAuthMiddleware = async (req, res, next) => {
+const ownerAuthMiddleware = async (req, res, next) => {
   let token;
-
+  console.log("Headers:", req.headers);
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       // Get token from header
@@ -65,4 +65,4 @@ export const memberAuthMiddleware = async (req, res, next) => {
   }
 }
 
-export default ownerownerAuthMiddleware;
+export default ownerAuthMiddleware;

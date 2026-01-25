@@ -31,6 +31,7 @@ export interface Member {
   OwnerMembershipPlan:{
     planName:string
   }
+  visitCount?:number;
 }
 export interface memberAuthState {
     memberData:Member[]
@@ -38,6 +39,7 @@ export interface memberAuthState {
     isAuthenticated:boolean
     isLoading:boolean
     isAdded:boolean
+    totalMembers:number
     memberProfile:Member | {}
 }
 export interface CredentialsPayload{

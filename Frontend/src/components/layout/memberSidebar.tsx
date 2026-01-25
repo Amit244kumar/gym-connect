@@ -31,12 +31,12 @@ interface MemberSidebarProps {
 const menuItems = [
   { name: 'Dashboard', icon: Home, id: 'dashboard', path: '/member/dashboard' },
   { name: 'My Profile', icon: User, id: 'profile', path: '/member/profile' },
-  { name: 'Membership', icon: CreditCard, id: 'membership', path: '/member/membership' },
+  // { name: 'Membership', icon: CreditCard, id: 'membership', path: '/member/membership' },
   { name: 'Attendance', icon: Activity, id: 'attendance', path: '/member/attendance' },
-  { name: 'Progress', icon: BarChart3, id: 'progress', path: '/member/progress' },
-  { name: 'Messages', icon: MessageSquare, id: 'messages', path: '/member/messages' },
-  { name: 'Settings', icon: Settings, id: 'settings', path: '/member/settings' },
-  { name: 'Help & Support', icon: HelpCircle, id: 'help', path: '/member/help' },
+  // { name: 'Progress', icon: BarChart3, id: 'progress', path: '/member/progress' },
+  // { name: 'Messages', icon: MessageSquare, id: 'messages', path: '/member/messages' },
+  // { name: 'Settings', icon: Settings, id: 'settings', path: '/member/settings' },
+  // { name: 'Help & Support', icon: HelpCircle, id: 'help', path: '/member/help' },
 ];
 
 export default function MemberSidebar({
@@ -46,6 +46,7 @@ export default function MemberSidebar({
   setActiveTab,
   setShowScanner,
 }: MemberSidebarProps) {
+  console.log("SDfdsfsdsd",toggleSidebar)
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
     const {memberProfile}=useSelector((state:RootState)=>state.memberAuth)
@@ -91,14 +92,14 @@ export default function MemberSidebar({
         <div className="flex items-center justify-between p-4 border-b border-slate-700 flex-shrink-0">
           <h2 className="text-xl font-bold text-white">GymHub</h2>
           {/* Close Button - Only visible on mobile when sidebar is open */}
-          <button
+          {/* <button
             onClick={toggleSidebar}
             className="md:hidden text-slate-400 hover:text-white"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
-          </button>
+          </button> */}
         </div>
 
         {/* Mobile Header with QR Button - Fixed so it doesn't scroll */}
@@ -204,7 +205,7 @@ export default function MemberSidebar({
               <div className="flex flex-col">
                 <h1 className="text-2xl font-bold text-white">Member Dashboard</h1>
                 <p className="text-slate-400 ml-2 hidden sm:inline">
-                  Welcome back, John! Here's your fitness overview
+                  Welcome back, Here's your fitness overview
                 </p>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import {CheckIn, GymOwner, Member, OwnerMembershipPlan } from '../models/index.js';
+import {CheckIn, GymOwner, Member, MembershipPlanFeature, OwnerMembershipPlan } from '../models/index.js';
 import { validationResult } from "express-validator";
 import bcrypt from "bcryptjs";
 import crypto from "crypto"; // Make sure to import crypto
@@ -136,7 +136,7 @@ const registerMember = async (req, res) => {
 const getAllMembers = async (req, res) => {
   try {
     const ownerId = req.user.id;
-    
+    console.log("owwwwnerId",ownerId)
     // Extract pagination parameters
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -172,41 +172,43 @@ const getAllMembers = async (req, res) => {
     if (gender) {
       whereClause.gender = gender;
     }
-    console.log("whereClause",whereClause)
+    
     // Find members with pagination, search, and filters
     const { count, rows: members } = await Member.findAndCountAll({
       where: whereClause,
-      attributes: { exclude: ['password', 'resetpasswordToken', 'resetpasswordExpires'] },
+      attributes: { exclude: ['password', 'resetpasswordToken', 'resetpasswordExpires','registrationUrl'] },
       order: [['createdAt', 'DESC']],
       limit,
       offset,
       include:{
-        
         model:OwnerMembershipPlan,
         attributes:["planName"]
       }
     });
 
-    console.log("membersdddd",members)
+   
     // Calculate pagination metadata
     const totalPages = Math.ceil(count / limit);
-    members.forEach(member => {
-      if(member.membershipEndDate){
-        const endDate = new Date(member.membershipEndDate);
-        const today = new Date();
-        
-        const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
-        console.log("dayssdfLeft",daysLeft)
-        member.dataValues.membershipExpireInDays=daysLeft;  
-      }
-      console.log("membesdsdr",member)
+      members.forEach(member => {
+        if(member.membershipEndDate){
+          const endDate = new Date(member.membershipEndDate);
+          const today = new Date();
+          
+          const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+          
+          member.dataValues.membershipExpireInDays=daysLeft;  
+        }
     });
     // Send response
+    const totalMember= await Member.count({where:{ownerId}})
+    console.log("totalMember",totalMember)
+   
     res.status(200).json({
       success: true,
       message: "Members retrieved successfully",
       data: {
         members,
+        totalMembers:totalMember,
         pagination: {
           totalItems: count,
           totalPages,
@@ -290,20 +292,45 @@ const memberLogout = async (req, res) => {
 const getMemberProfile=async (req,res)=>{
   try {
     const memberId=req.user.id
-    const member=await Member.findByPk(memberId,{
-      attributes: { exclude: ['password', 'resetpasswordToken', 'resetpasswordExpires'] },
+    const member=await Member.findByPk(memberId,
+      {
+        attributes: { exclude: ['password', 'resetpasswordToken', 'resetpasswordExpires']  },
+        include:{
+          model:OwnerMembershipPlan,
+          as:"OwnerMembershipPlan",
+          // include:{
+          //   model:MembershipPlanFeature,
+          //   as:"features"
+          // }
+        }
+      },
+    )
+    //count visit in first 30 days
+    const visitCount=await CheckIn.count({
+      where:{memberId},
+      createdAt:{
+        [Op.gte]:member.membershipStartDate,
+        [Op.lte]:member.membershipStartDate+ 1000 * 60 * 60 * 24 * 30
+      }
     })
-    console.log("memberprofile",member)
+    const lastVisit=await CheckIn.findOne({
+      where:{memberId},
+      order:[['createdAt','DESC']]
+    })
+    console.log("lastVisit",lastVisit)
+    console.log("memberprofiwwwwle",visitCount)
     if(!member){
       return res.status(404).json({
         success:false,
         message:"Member not found"
       })
     }
+    member.visitCount=visitCount
+    console.log("membeseeeedsdr",member)
     res.status(200).json({
       success:true,
       message:"Member profile fetched successfully",
-      data:member
+      data:{...member.toJSON(),visitCount,lastVisit:lastVisit?lastVisit.createdAt:null}
     })
   } catch (error) {
     res.status(500).json({
@@ -335,9 +362,45 @@ const memberCheckIn=async (req,res)=>{
         message:"Invalid QR code"
       })  
     }
+    let daysLeft = null;
+    if(member.membershipEndDate){
+      const endDate = new Date(member.membershipEndDate);
+      const today = new Date();
+        
+      daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+    }
+    console.log("membesdsdr",member,daysLeft)
+    if(daysLeft!==null && daysLeft<=0){
+      const isExist=await CheckIn.findOne({
+        where:{
+          memberId:member.id,
+          checkInStatus:'failed',
+          createdAt:{
+            [Op.gte]:new Date(new Date().setHours(0,0,0,0)),
+            [Op.lte]:new Date(new Date().setHours(23,59,59,999))
+          }
+        }
+      })
+      console.log("isExist",isExist)
+      if(!isExist){
+        const expired=await CheckIn.create({
+          memberId: member.id,
+          ownerId: isQRValid.id,
+          checkInStatus: 'failed',
+        });
+        console.log("sdfsdfs",expired)
+      }
+      return res.status(400).json({
+        success:false,
+        message:"Membership has expired. Please renew your membership to check in.",
+        data:{isMembershipExpired:true}
+      })
+    }
+
     const isAlreadyCheckedIn=await CheckIn.findOne({
       where:{
         memberId:member.id,
+        checkInStatus:'success',
         createdAt:{
           [Op.gte]:new Date(new Date().setHours(0,0,0,0)),
           [Op.lte]:new Date(new Date().setHours(23,59,59,999))
@@ -371,4 +434,35 @@ const memberCheckIn=async (req,res)=>{
     });
   }
 };
+
+// const getMemberStats=async (req,res)=>{
+//   try {
+//     const memberId=req.user.id
+//     // Fetch and calculate statistics as needed
+//     const member = await Member.findByPk(memberId,
+//       attributes: { include: [] }
+//     );
+//     if (!member) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Member not found",
+//       });
+//     }
+
+//     res.status(200).json({
+//       success:true,
+//       message:"Member statistics fetched successfully",
+//       data:{  
+//         // Add statistics data here
+//       }
+//     })
+//   } 
+//   catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       error: "Server error while fetching member statistics",
+//       details: error.message,
+//     });
+//   }
+// };
 export default { registerMember,getAllMembers,memberLogin,memberLogout,getMemberProfile,memberCheckIn };

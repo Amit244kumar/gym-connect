@@ -33,9 +33,9 @@ console.log("recentMembers",members);
   return (
     <div className="overflow-x-auto">
      <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
+        {/* <CardHeader>
           <CardTitle className="text-white">All Members</CardTitle>
-        </CardHeader>
+        </CardHeader> */}
         <CardContent>
           <Table>
             <TableHeader>
@@ -55,12 +55,13 @@ console.log("recentMembers",members);
                 members.map((member: Member) => (
                   <TableRow key={member.id} className="border-slate-700 hover:bg-slate-700/50">
                     <TableCell>
+                      {console.log("memberPhoto", member?.memberPhoto)}
                       {member?.memberPhoto ? (
                         <img
                           src={getFullImageUrl(member.memberPhoto)}
                           alt="Profile"
                           className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
-                          // crossOrigin="anonymous"
+                          crossOrigin="anonymous"
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-600">
@@ -84,38 +85,7 @@ console.log("recentMembers",members);
                       <div>{formatDate(member.membershipStartDate)}</div>
                       <div className="text-slate-400">to {formatDate(member.membershipEndDate)}</div>
                     </TableCell>
-                    {/* <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
-                              <DropdownMenuItem
-                                onClick={() => handleViewMember(member)}
-                                className="text-white hover:bg-slate-700 cursor-pointer"
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                View
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleEditMember(member)}
-                                className="text-white hover:bg-slate-700 cursor-pointer"
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteMember(member)}
-                                className="text-white hover:bg-slate-700 cursor-pointer"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell> */}
+                 
                   </TableRow>
                 ))
               ) : (
