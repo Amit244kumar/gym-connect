@@ -18,6 +18,7 @@ import { logger } from './utils/logger.js';
 
 // Import database connection
 import sequelize from './config/database.js';
+import MembershipRenewal from './models/MembershipRenewal.js';
 
 // Load environment variables
 dotenv.config();
@@ -33,7 +34,8 @@ const API_VERSION = process.env.API_VERSION || 'v1';
 sequelize.authenticate()
   .then(() => console.log("✅ Connected to PostgreSQL"))
   .catch(err => console.error("❌ Error:", err)); 
-sequelize.sync(); 
+// await sequelize.sync({alter:true}); 
+// await Member.sync({alter:true});
 // Security middleware
 app.use(
   helmet({

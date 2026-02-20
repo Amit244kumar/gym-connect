@@ -6,8 +6,8 @@ interface configType{
     keepalive:boolean
 }
 export const config:configType={
-    baseURL:'https://circinate-noninherited-whitley.ngrok-free.dev',
-    // baseURL:'http://localhost:5000',
+    // baseURL:'https://circinate-noninherited-whitley.ngrok-free.dev',
+    baseURL:'http://localhost:5000',
     keepalive: true,
     headers: {
       'X-Requested-With': 'XMLHttpRequest',

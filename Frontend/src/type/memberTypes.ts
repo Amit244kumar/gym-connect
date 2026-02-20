@@ -28,7 +28,7 @@ export interface Member {
   address?: string;
   dateOfBirth?: string;
   memberPhoto?: string;
-  OwnerMembershipPlan:{
+  renawals:{
     planName:string
   }
   visitCount?:number;

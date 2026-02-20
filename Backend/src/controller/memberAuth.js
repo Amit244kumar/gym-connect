@@ -1,13 +1,18 @@
-import {CheckIn, GymOwner, Member, MembershipPlanFeature, OwnerMembershipPlan } from '../models/index.js';
+import {CheckIn, GymOwner, Member,MembershipRenewal, OwnerMembershipPlan } from '../models/index.js';
 import { validationResult } from "express-validator";
 import bcrypt from "bcryptjs";
 import crypto from "crypto"; // Make sure to import crypto
 // import logger from "../utils/logger.js";
+
 import { sendMemberWelcomeEmail } from '../helper/emailHelper.js';
 import { generateMemberToken } from '../utils/helper.js';
 import { Op } from 'sequelize';
+import sequelize from '../config/database.js';
+
 
 const registerMember = async (req, res) => {
+  const transaction = await sequelize.transaction(); // Start transaction
+  
   try {
     // 1. Validate request body
     const errors = validationResult(req);
@@ -27,63 +32,50 @@ const registerMember = async (req, res) => {
       dateOfBirth,
       gender,
       plan, 
-      startDate:membershipStartDate, 
+      startDate: membershipStartDate, 
     } = req.body;
-    const ownerId=req.user.id
-    console.log("req.body",name, 
-      email, 
-      phone, 
-      address, 
-      dateOfBirth,
-      gender,
-      plan, 
-      membershipStartDate
-      ,ownerId)
-      const memberPhoto = req.file ? `member/${req.file.filename}` : null;
-      console.log("memberPhoto",memberPhoto)
+    
+    const ownerId = req.user.id;
+    const memberPhoto = req.file ? `member/${req.file.filename}` : null;
+
     // 2. Check if member already exists (email or phone)
     const existingUserWithEmail = await Member.findOne({
-      where: { email }
+      where: { email },
+      transaction
     });
     
     if (existingUserWithEmail) {
+      await transaction.rollback();
       return res.status(409).json({
         success: false,
         message: "User with this email already exists",
       });
     }
 
-    // const existingUserWithPhone = await Member.findOne({
-    //   where: { phone }
-    // });
-    
-    // if (existingUserWithPhone) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     error: "User with this phone already exists",
-    //   });
-    // }
+    // 3. Check if membership plan exists
+    const membershipPlan = await OwnerMembershipPlan.findByPk(plan, { transaction });
+    if (!membershipPlan) {
+      await transaction.rollback();
+      return res.status(404).json({
+        success: false,
+        error: "Membership plan not found",
+      });
+    }
 
-    // 3. Generate a temporary random password
+    // 4. Generate a temporary random password
     const tempPassword = crypto.randomBytes(10).toString('base64url').substring(0, 10);
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
-    console.log("dsafasads",tempPassword,hashedPassword)
 
+    // 5. Calculate membership end date
     let membershipEndDate = null;
     if (membershipStartDate && plan) {
       const startDate = new Date(membershipStartDate);
-      
-      const membershipPlan=await OwnerMembershipPlan.findByPk(plan)
-      console.log("dfs",membershipPlan,membershipPlan.month)
       membershipEndDate = new Date(startDate);
       membershipEndDate.setMonth(startDate.getMonth() + membershipPlan.duration);
-      
-      // Format dates as YYYY-MM-DD for database storage
       membershipEndDate = membershipEndDate.toISOString().split('T')[0];
     }
-    
 
-    // 5. Prepare member data
+    // 6. Prepare member data
     const memberData = {
       name,
       email: email.toLowerCase(),
@@ -92,11 +84,8 @@ const registerMember = async (req, res) => {
       address,
       dateOfBirth,
       gender,
-      membershipType: plan, // Using 'plan' from request as 'membershipType'
-      membershipStartDate,
-      membershipEndDate,
       membershipStatus: "active",
-      ownerId // assuming owner is authenticated
+      ownerId
     };
 
     // Add member photo if provided
@@ -104,17 +93,46 @@ const registerMember = async (req, res) => {
       memberData.memberPhoto = memberPhoto;
     }
 
-    // 6. Create the member
-    const member = await Member.create(memberData);
+    // 7. Create the member within transaction
+    const member = await Member.create(memberData, { transaction });
 
-    // 7. Remove sensitive data before sending response
+    // 8. Create membership renewal record within transaction
+    const memberRenewal = await MembershipRenewal.create({
+      memberId: member.id,
+      planId: plan,
+      renewalDate: membershipStartDate,
+      expiryDate: membershipEndDate,
+    }, { transaction });
+
+    // 9. Update member with renewal ID
+    member.memberRenewalId = memberRenewal.id;
+    await member.save({ transaction });
+
+    // 10. Get gym owner details
+    const gymOwner = await GymOwner.findByPk(ownerId, { transaction });
+    if (!gymOwner) {
+      await transaction.rollback();
+      return res.status(404).json({
+        success: false,
+        error: "Gym owner not found",
+      });
+    }
+
+    // 11. Send welcome email (outside transaction as it's not critical for data consistency)
+    try {
+      await sendMemberWelcomeEmail(email, tempPassword, name, gymOwner.gymName);
+    } catch (emailError) {
+      console.warn("Failed to send welcome email:", emailError.message);
+      // Don't rollback transaction just because email failed
+    }
+
+    // 12. Commit the transaction
+    await transaction.commit();
+
+    // 13. Remove sensitive data before sending response
     const { password, resetpasswordToken, resetpasswordExpires, ...memberDataResponse } = member.toJSON();
 
-    // 8. Log and respond
-    console.log(`New member registered: ${member.email} by owner: ${req.user.id}`);
-    const gymOwner=await GymOwner.findByPk(ownerId)
-    
-    await sendMemberWelcomeEmail(email,tempPassword,name,gymOwner.gymName)
+    // 14. Return success response
     res.status(201).json({
       success: true,
       message: "Member registered successfully",
@@ -124,16 +142,55 @@ const registerMember = async (req, res) => {
         note: "Temporary password generated. Member should change it on first login.",
       },
     });
+
   } catch (error) {
+    // 15. Rollback transaction on any error
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+
+    // 16. Handle specific database errors
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({
+        success: false,
+        error: "Duplicate entry found",
+        details: error.errors.map(err => err.message)
+      });
+    }
+
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        error: "Validation error",
+        details: error.errors.map(err => err.message)
+      });
+    }
+
+    // 17. Handle file cleanup if photo was uploaded but transaction failed
+    if (req.file) {
+      try {
+        const fs = require('fs').promises;
+        const path = require('path');
+        const filePath = path.join(__dirname, '..', 'uploads', req.file.filename);
+        await fs.unlink(filePath);
+      } catch (cleanupError) {
+        console.error("Failed to cleanup uploaded file:", cleanupError.message);
+      }
+    }
+
+    // 18. Log error for debugging
+    console.error("Error in registerMember:", error);
+
+    // 19. Return generic server error
     res.status(500).json({
       success: false,
       error: "Server error while registering member",
-      details: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
 
-const getAllMembers = async (req, res) => {
+const getAllMembers = async (req, res) => { 
   try {
     const ownerId = req.user.id;
     console.log("owwwwnerId",ownerId)
@@ -180,18 +237,32 @@ const getAllMembers = async (req, res) => {
       order: [['createdAt', 'DESC']],
       limit,
       offset,
-      include:{
-        model:OwnerMembershipPlan,
-        attributes:["planName"]
-      }
-    });
+      include: [
+          {
+            model: MembershipRenewal,  // Misspelled
+            as: "renewals",            // Misspelled
+            separate: true,   
+            limit: 1,
+            order: [['createdAt', 'DESC']], 
+            attributes: ["renewalDate", "expiryDate"],
+            include: [
+              {
+                model: OwnerMembershipPlan,
+                as: "plan", 
+                attributes: ["planName"]
+              }
+            ]
+          }
+        ]
 
+    });
+    console.log("dfsddfgdf",members)  
    
     // Calculate pagination metadata
     const totalPages = Math.ceil(count / limit);
       members.forEach(member => {
-        if(member.membershipEndDate){
-          const endDate = new Date(member.membershipEndDate);
+        if(member.renewals && member.renewals[0]?.expiryDate){
+          const endDate = new Date(member.renewals[0]?.expiryDate);
           const today = new Date();
           
           const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
@@ -297,7 +368,7 @@ const getMemberProfile=async (req,res)=>{
         attributes: { exclude: ['password', 'resetpasswordToken', 'resetpasswordExpires']  },
         include:{
           model:OwnerMembershipPlan,
-          as:"OwnerMembershipPlan",
+          as:"membershipPlan",
           // include:{
           //   model:MembershipPlanFeature,
           //   as:"features"

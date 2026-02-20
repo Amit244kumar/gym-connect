@@ -54,7 +54,7 @@ OwnerMembershipPlan.init(
   {
     sequelize,
     modelName: 'OwnerMembershipPlan',
-    tableName: 'OwnerMembershipPlan',
+    tableName: 'owner_membership_plans',
     underscored: true,
     timestamps: true,
     indexes: [

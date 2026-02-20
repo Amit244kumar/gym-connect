@@ -3,6 +3,7 @@ import sequelize from "../config/database.js";
 import bcrypt from "bcryptjs";
 import GymOwner from "./gymOwner.js";
 import OwnerMembershipPlan from "./OwnerMembershipPlan.js";
+import MembershipRenawal from "./MembershipRenewal.js";
 
 class Member extends Model {
   async comparePassword(candidatePassword) {
@@ -74,25 +75,31 @@ Member.init(
     },
 
     // Membership related fields
-    membershipType: {
-     type:DataTypes.INTEGER,
-     allowNull:true,
-     field:"membershipPlan_id",
-     references:{model:OwnerMembershipPlan,key:"id"}
-    },
+    // membershipType: {
+    //  type:DataTypes.INTEGER,
+    //  allowNull:true,
+    //  field:"membershipPlan_id",
+    //  references:{model:OwnerMembershipPlan,key:"id"}
+    // },
 
-    membershipStartDate: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-      field: "membership_start_date"
-    },
+    // membershipStartDate: {
+    //   type: DataTypes.DATEONLY,
+    //   allowNull: true,
+    //   field: "membership_start_date"
+    // },
 
-    membershipEndDate: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-      field: "membership_end_date"
-    },
+    // membershipEndDate: {
+    //   type: DataTypes.DATEONLY,
+    //   allowNull: true,
+    //   field: "membership_end_date"
+    // },
 
+    memberRenewalId:{
+      type:DataTypes.INTEGER,
+      allowNull:true,
+      field:"member_renewal_id",
+      references:{model:'membership_renewals',key:"id"}
+    },
 
     membershipStatus: {
       type: DataTypes.ENUM("active", "expired", "suspended"),
@@ -113,6 +120,16 @@ Member.init(
     modelName: "Member",
     tableName: "members",
     timestamps: true,
+  },
+  Member.associations = function(models) {
+    Member.belongsTo(models.GymOwner, {
+      foreignKey: "owner_id",
+      as: "gymOwner",
+    });
+    Member.hasMany(models.MembershipRenewal, {
+      foreignKey: "member_id",
+      as: "membershipRenewals",
+    });
   }
 );
 
